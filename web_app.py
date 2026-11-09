@@ -115,10 +115,10 @@ with tab_est:
         with col1:
             st.download_button(label="🟢 СКАЧАТЬ В EXCEL", data=m.get_excel_bytes(full_list, grand_total), file_name="Смета.xlsx", use_container_width=True)
         with col2:
-            st.download_button(label="🔵 СКАЧАТЬ В PDF", 
+            st.download_button(label="🔵 СКАЧАТЬ В PDF/ТЕКСТ", 
                 data=m.get_pdf_bytes(full_list, grand_total), 
-                file_name="КП_Инженерия.pdf", 
-                mime="application/pdf", 
+                file_name="КП_Инженерия.txt", 
+                mime="text/plain", 
                 use_container_width=True)
     else: st.info("Проведите расчет в разделах.")
 
