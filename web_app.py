@@ -157,18 +157,43 @@ if tab_coef:
 if tab_prices:
     with tab_prices:
         draw_text_header("Управление прайс-листом")
+        
         with st.expander("❄️ ЦЕНЫ: КЛИМАТ", expanded=False):
-            for k in pr["hvac"].keys(): pr["hvac"][k] = st.number_input(f"{k} (руб)", value=int(pr["hvac"][k]), key=f"p_h_{k}")
+            pr["hvac"]["work_standard"] = st.number_input("Стандартный монтаж (руб)", value=int(pr["hvac"]["work_standard"]), key="pr_ws")
+            pr["hvac"]["work_stage_1"] = st.number_input("Закладка трасс 1-й этап (руб)", value=int(pr["hvac"]["work_stage_1"]), key="pr_s1")
+            pr["hvac"]["work_stage_2"] = st.number_input("Навеска блоков 2-й этап (руб)", value=int(pr["hvac"]["work_stage_2"]), key="pr_s2")
+            pr["hvac"]["pipe"] = st.number_input("Труба медная за метр (руб)", value=int(pr["hvac"]["pipe"]), key="pr_pi")
+            pr["hvac"]["bracket"] = st.number_input("Кронштейны внешнего блока (руб)", value=int(pr["hvac"]["bracket"]), key="pr_br")
+            pr["hvac"]["drain"] = st.number_input("Дренажный шланг за метр (руб)", value=int(pr["hvac"]["drain"]), key="pr_dr")
+            pr["hvac"]["pump"] = st.number_input("Монтаж дренажной помпы (руб)", value=int(pr["hvac"]["pump"]), key="pr_pu")
+            pr["hvac"]["box"] = st.number_input("Монтаж короба за метр (руб)", value=int(pr["hvac"]["box"]), key="pr_bo")
+            pr["hvac"]["chasing_brick"] = st.number_input("Штроба кирпич за метр (руб)", value=int(pr["hvac"]["chasing_brick"]), key="pr_cb")
+            pr["hvac"]["chasing_concrete"] = st.number_input("Штроба монолит за метр (руб)", value=int(pr["hvac"]["chasing_concrete"]), key="pr_cc")
+            pr["hvac"]["coring"] = st.number_input("Алмазное бурение отверстия (руб)", value=int(pr["hvac"]["coring"]), key="pr_co")
+            
         with st.expander("⚡ ЦЕНЫ: ЭЛЕКТРИКА", expanded=False):
-            for k in pr["electric"].keys(): pr["electric"][k] = st.number_input(f"{k} (руб)", value=int(pr["electric"][k]), key=f"p_e_{k}")
+            pr["electric"]["point"] = st.number_input("Монтаж точки / подрозетника (руб)", value=int(pr["electric"]["point"]), key="pr_ep")
+            pr["electric"]["cable_1.5"] = st.number_input("Кабель 3х1.5 свет за метр (руб)", value=int(pr["electric"]["cable_1.5"]), key="pr_c1")
+            pr["electric"]["cable_2.5"] = st.number_input("Кабель 3х2.5 розетки за метр (руб)", value=int(pr["electric"]["cable_2.5"]), key="pr_c2")
+            pr["electric"]["cable_4.0"] = st.number_input("Кабель 3х4.0 сила за метр (руб)", value=int(pr["electric"]["cable_4.0"]), key="pr_c4")
+            pr["electric"]["corrugation"] = st.number_input("Гофра за метр (руб)", value=int(pr["electric"]["corrugation"]), key="pr_eco")
+            pr["electric"]["clips"] = st.number_input("Клипса за штуку (руб)", value=int(pr["electric"]["clips"]), key="pr_ecl")
+            pr["electric"]["breaker"] = st.number_input("Установка автомата в щит (руб)", value=int(pr["electric"]["breaker"]), key="pr_ebr")
+            pr["electric"]["chasing"] = st.number_input("Штробление за метр (руб)", value=int(pr["electric"]["chasing"]), key="pr_ech")
+            
         with st.expander("🚰 ЦЕНЫ: САНТЕХНИКА", expanded=False):
-            for k in pr["plumbing"].keys(): pr["plumbing"][k] = st.number_input(f"{k} (руб)", value=int(pr["plumbing"][k]), key=f"p_p_{k}")
+            pr["plumbing"]["point"] = st.number_input("Монтаж точки водоразбора (руб)", value=int(pr["plumbing"]["point"]), key="pr_pp")
+            pr["plumbing"]["pipe_16"] = st.number_input("Труба PEX 16мм за метр (руб)", value=int(pr["plumbing"]["pipe_16"]), key="pr_p16")
+            pr["plumbing"]["pipe_20"] = st.number_input("Труба PEX 20мм за метр (руб)", value=int(pr["plumbing"]["pipe_20"]), key="pr_p20")
+            pr["plumbing"]["collector"] = st.number_input("Сборка коллектора (руб)", value=int(pr["plumbing"]["collector"]), key="pr_pco")
+            pr["plumbing"]["fitting"] = st.number_input("Фитинги/Водорозетки за шт (руб)", value=int(pr["plumbing"]["fitting"]), key="pr_pfi")
+            
         if st.button("💾 СОХРАНИТЬ ПРАЙС-ЛИСТ НА СЕРВЕРЕ", type="primary", use_container_width=True, key="btn_save_p"):
             try:
                 with open("local_prices.txt", "w", encoding="utf-8") as f:
                     for s in ["hvac", "electric", "plumbing"]:
                         for k, v in pr[s].items(): f.write(f"{k}={v}\n")
-                st.success("Прайс-лист успешно зафиксирован!")
+                st.success("Прайс-лист успешно сохранён!")
             except: st.error("Ошибка сохранения.")
 
 with tab_est:
@@ -188,7 +213,9 @@ with tab_est:
             txt = "=========================================\n   КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ (СМЕТА)\n=========================================\n\n"
             for i in full_list: txt += f"[{i['Раздел']}] {i['Наименование']}\n  {i['Кол-во']} {i['Ед.изм']} х {i['Цена']} руб. = {i['Сумма']} руб.\n\n"
             txt += f"-----------------------------------------\nИТОГОВАЯ СТОИМОСТЬ ПОД КЛЮЧ: {grand_total} руб."
-            st.download_button(label="🔵 СКАЧАТЬ В PDF", data=io.BytesIO(txt.encode('utf-8')), file_name="КП_Инженерия.txt", mime="text/plain", use_container_width=True, key="down_tx")
+            st.download_button(label="🔵 СКАЧАТЬ В TXT", data=io.BytesIO(txt.encode('utf-8')), file_name="КП_Инженерия.txt", mime="text/plain", use_container_width=True, key="down_tx")
     else: st.info("Проведите расчет в разделах.")
+
+if st.sidebar.button("Выйти из системы", key="btn_logout"): st.session_state.auth = False; st.rerun()
 
 if st.sidebar.button("Выйти из системы", key="btn_logout"): st.session_state.auth = False; st.rerun()
