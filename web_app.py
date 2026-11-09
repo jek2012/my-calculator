@@ -5,17 +5,16 @@ from calculations import Model
 st.set_page_config(page_title="Калькулятор смет под ключ", layout="centered")
 P_ADMIN, P_GUEST = "admin", "123"
 
-# --- ФУНКЦИЯ ДЛЯ СОЗДАНИЯ НЕУБИВАЕМЫХ ГРАФИЧЕСКИХ ЗАГОЛОВКОВ ---
-# Текст внутри этого блока зашит как векторная графика и никогда не перенесется коряво
+# --- ОБНОВЛЕННАЯ ФУНКЦИЯ УМНЫХ ЗАГОЛОВКОВ ---
+# fill="currentColor" заставляет буквы менять цвет: черные на светлом фоне, белые на темном!
 def draw_svg_header(text, size=24, height=50, is_main=False):
-    fill_color = "#ffffff" if not is_main else "#fffdfa"
     font_weight = "bold" if is_main else "normal"
     y_pos = 35 if is_main else 32
     emoji = "🏗️ " if is_main else ""
     
     svg_code = f"""
     <svg xmlns="http://w3.org" width="100%" height="{height}px" viewBox="0 0 800 {height}" preserveAspectRatio="xMinYMid meet">
-        <text x="0" y="{y_pos}" font-family="Arial, sans-serif" font-size="{size}px" font-weight="{font_weight}" fill="{fill_color}">
+        <text x="0" y="{y_pos}" font-family="Arial, sans-serif" font-size="{size}px" font-weight="{font_weight}" fill="currentColor">
             {emoji}{text}
         </text>
     </svg>
@@ -41,7 +40,7 @@ if "model" not in st.session_state:
 
 m = st.session_state.model
 
-# Главный заголовок сайта в виде графики (не рвется на мобильных)
+# Главный заголовок
 draw_svg_header("Инженерный калькулятор смет", size=32, height=60, is_main=True)
 st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Рабочий/Гость'}")
 
@@ -125,7 +124,7 @@ if tab_prices:
 
         if st.button("💾 СОХРАНИТЬ ПРАЙС-ЛИСТ НА СЕРВЕРЕ", type="primary", use_container_width=True):
             if m.save_local_prices(): st.success("Прайс-лист успешно перезаписан и зафиксирован для всех пользователей!")
-            else: st.error("Ошибка сохранения файла на сервере.")
+            else: st.error("Ошибка保存 файла на сервере.")
 
 with tab_est:
     draw_svg_header("Итоговая смета инженерии объекта", size=24, height=45)
