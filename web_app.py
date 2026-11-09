@@ -80,7 +80,7 @@ with tab_hvac:
     b = st.number_input("Блоки (шт)", min_value=0, value=0)
     p = st.number_input("Трасса (м)", min_value=0.0, value=0.0)
     mode = st.selectbox("Схема", ["В один этап (Стандарт)", "1-й этап (Закладка трасс)", "2-й этап (Навеска блоков)"])
-    with st.expander("Дополнительные усложнения"):
+    with st.expander("Доп.Работы"):
         pump = st.number_input("Помпы (шт)", min_value=0, value=0)
         box = st.number_input("Короб (м)", min_value=0.0, value=0.0)
         core = st.number_input("Бурение отверстий (шт)", min_value=0, value=0)
@@ -100,7 +100,7 @@ with tab_elec:
         st.success(f"Всего: {st.session_state.e_tot} руб.")
 
 with tab_plumb:
-    draw_text_header("Сантехника и Отопление дома")
+    draw_text_header("Сантехника и Отопление")
     p_pt = st.number_input("Точки водоснабжения (шт)", min_value=0, value=0)
     col = st.number_input("Коллекторы (шт)", min_value=0, value=0)
     if st.button("Рассчитать сантехнику", type="primary"):
