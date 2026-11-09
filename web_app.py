@@ -5,54 +5,13 @@ from calculations import Model
 st.set_page_config(page_title="Калькулятор смет под ключ", layout="centered")
 P_ADMIN, P_GUEST = "admin", "123"
 
-# --- ФУНКЦИЯ С ОГРАНИЧЕНИЕМ МАКСИМАЛЬНОГО РАЗМЕРА ШРИФТА ---
-# clamp(минимальный, адаптивный, максимальный) — идеальное решение для адаптивности
-def draw_text_header(text, is_main=False):
-    emoji = "🏗️ " if is_main else ""
-    margin_bottom = "20px" if is_main else "10px"
-    
-    if is_main:
-        html_code = f"""
-        <div style="
-            background: rgba(255, 255, 255, 0.05);
-            border-left: 5px solid #1f538d;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: {margin_bottom};
-            margin-top: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        ">
-            <span style="font-size: 22px; vertical-align: middle;">{emoji}</span>
-            <span style="
-                font-family: 'Segoe UI', Arial, sans-serif; 
-                font-size: clamp(20px, 4vw, 26px); 
-                font-weight: 800; 
-                color: currentColor;
-                line-height: 1.3;
-            ">{text}</span>
-        </div>
-        """
-    else:
-        html_code = f"""
-        <div style="
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            font-size: clamp(16px, 2.5vw, 20px); 
-            font-weight: 600; 
-            color: currentColor; 
-            line-height: 1.4;
-            margin-bottom: 15px;
-            margin-top: 15px;
-        ">
-            {text}
-        </div>
-        """
+def draw_text_header(text, size=24, is_main=False):
+    html_code = f"""<div style="font-family: Arial, sans-serif; font-size: clamp({size-4}px, 3.5vw, {size}px); font-weight: bold; color: currentColor; white-space: nowrap; margin-bottom: {'20px' if is_main else '10px'};">{'🏗️ ' if is_main else ''}{text}</div>"""
     st.markdown(html_code, unsafe_allow_html=True)
 
-if "auth" not in st.session_state:
-    st.session_state.auth, st.session_state.role = False, None
-
+if "auth" not in st.session_state: st.session_state.auth, st.session_state.role = False, None
 if not st.session_state.auth:
-    draw_text_header("Вход в Калькулятор Смет", is_main=True)
+    draw_text_header("Вход в Калькулятор Смет", size=26, is_main=True)
     user_pass = st.text_input("Введите код доступа:", type="password")
     if st.button("Войти", type="primary", use_container_width=True):
         if user_pass == P_ADMIN: st.session_state.auth, st.session_state.role = True, "admin"; st.rerun()
@@ -65,9 +24,7 @@ if "model" not in st.session_state:
     st.session_state.h_tot, st.session_state.e_tot, st.session_state.p_tot = 0, 0, 0
 
 m = st.session_state.model
-
-draw_text_header("Инженерный калькулятор смет", is_main=True)
-st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Гость'}")
+draw_text_header("Инженерный калькулятор смет", size=28, is_main=True)
 
 t_list = ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "📊 Расход", "💰 Цены", "🧾 Итог"] if st.session_state.role == "admin" else ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "🧾 Итог"]
 tabs = st.tabs(t_list)
@@ -75,80 +32,62 @@ tabs = st.tabs(t_list)
 if st.session_state.role == "admin": tab_hvac, tab_elec, tab_plumb, tab_coef, tab_prices, tab_est = tabs
 else: tab_hvac, tab_elec, tab_plumb, tab_est = tabs; tab_coef, tab_prices = None, None
 
-with tab_hvac:
-    draw_text_header("Кондиционирование и вентиляция")
-    b = st.number_input("Блоки (шт)", min_value=0, value=0)
-    p = st.number_input("Трасса (м)", min_value=0.0, value=0.0)
-    mode = st.selectbox("Схема", ["В один этап (Стандарт)", "1-й этап (Закладка трасс)", "2-й этап (Навеска блоков)"])
-    with st.expander("Доп.Работы"):
-        pump = st.number_input("Помпы (шт)", min_value=0, value=0)
-        box = st.number_input("Короб (м)", min_value=0.0, value=0.0)
-        core = st.number_input("Бурение отверстий (шт)", min_value=0, value=0)
-        ch_b = st.number_input("Штроба кирпич (м)", min_value=0.0, value=0.0)
-        ch_c = st.number_input("Штроба монолит (м)", min_value=0.0, value=0.0)
-    if st.button("Рассчитать климат", type="primary"):
-        st.session_state.h_tot = m.calc_hvac(b, p, mode, pump, box, ch_b, ch_c, core)
-        st.success(f"Всего: {st.session_state.h_tot} руб.")
+# --- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ГЕНЕРАЦИИ ПОЛЕЙ ВВОДА НА ВКЛАДКАХ ---
+def render_calc_tab(tab, title, section_rus, points_key=None):
+    with tab:
+        draw_text_header(title, size=20)
+        inputs = {}
+        points_val = 0
+        sect_code = "hvac" if section_rus == "Климат" else ("electric" if section_rus == "Ед_Изм" else "plumbing")
+        
+        # Если в разделе есть авто-коэффициенты, сначала просим ввести количество главных точек
+        if points_key:
+            for k, item in m.prices.get(points_key, {}).items():
+                if item["Тип_Ввода"] == "число" and ("точек" in item["Наименование"] or "блоков" in item["Наименование"]):
+                    points_val = st.number_input(f"{item['Наименование']} ({item['Ед_Изм']})", min_value=0, value=0, key=f"p_{k}")
+                    inputs[k] = points_val
 
-with tab_elec:
-    draw_text_header("Электрика и силовые щиты")
-    pt = st.number_input("Количество точек (шт)", min_value=0, value=0)
-    ch = st.number_input("Штроба всего (м)", min_value=0.0, value=0.0)
-    eb = st.number_input("Автоматы в щит (шт)", min_value=0, value=0)
-    if st.button("Рассчитать электрику", type="primary"):
-        st.session_state.e_tot = m.calc_elec(pt, ch, eb)
-        st.success(f"Всего: {st.session_state.e_tot} руб.")
+        # Генерируем поля для всех остальных ручных пунктов "число"
+        for k, item in m.prices.get(sect_code, {}).items():
+            if item["Тип_Ввода"] == "число" and k not in inputs:
+                inputs[k] = st.number_input(f"{item['Наименование']} ({item['Ед_Изм']})", min_value=0, value=0, key=f"inp_{k}")
 
-with tab_plumb:
-    draw_text_header("Сантехника и Отопление")
-    p_pt = st.number_input("Точки водоснабжения (шт)", min_value=0, value=0)
-    col = st.number_input("Коллекторы (шт)", min_value=0, value=0)
-    if st.button("Рассчитать сантехнику", type="primary"):
-        st.session_state.p_tot = m.calc_plumb(p_pt, col)
-        st.success(f"Всего: {st.session_state.p_tot} руб.")
+        if st.button(f"Рассчитать {section_rus.lower()}", type="primary", key=f"btn_{section_rus}"):
+            res_list, total = m.calc_section(section_rus, inputs, points_qty=points_val)
+            st.success(f"Всего по разделу: {total} руб.")
+            return total
+    return 0
+
+# Отрендеринг вкладок
+h_t = render_calc_tab(tab_hvac, "Кондиционирование и вентиляция", "Климат", "hvac")
+if h_t: st.session_state.h_tot = h_t
+
+e_t = render_calc_tab(tab_elec, "Электрика и силовые щиты", "Электрика", "electric")
+if e_t: st.session_state.e_tot = e_t
+
+p_t = render_calc_tab(tab_plumb, "Сантехника и Отопление дома", "Сантехника", "plumbing")
+if p_t: st.session_state.p_tot = p_t
 
 if tab_coef:
     with tab_coef:
-        draw_text_header("Нормы расхода материалов")
+        draw_text_header("Нормы расхода материалов", size=20)
         m.cc = st.number_input("Кабель на точку (м)", value=m.cc)
         m.cp = st.number_input("Труба PEX на точку (м)", value=m.cp)
 
 if tab_prices:
     with tab_prices:
-        draw_text_header("Управление прайс-листом")
-        with st.expander("❄️ ЦЕНЫ: КЛИМАТ", expanded=False):
-            m.prices["hvac"]["work_standard"] = st.number_input("Стандартный монтаж (руб)", value=int(m.prices["hvac"]["work_standard"]))
-            m.prices["hvac"]["work_stage_1"] = st.number_input("Закладка трасс 1-й этап (руб)", value=int(m.prices["hvac"]["work_stage_1"]))
-            m.prices["hvac"]["work_stage_2"] = st.number_input("Навеска блоков 2-й этап (руб)", value=int(m.prices["hvac"]["work_stage_2"]))
-            m.prices["hvac"]["pipe"] = st.number_input("Труба медная за метр (руб)", value=int(m.prices["hvac"]["pipe"]))
-            m.prices["hvac"]["bracket"] = st.number_input("Кронштейны внешнего блока (руб)", value=int(m.prices["hvac"]["bracket"]))
-            m.prices["hvac"]["drain"] = st.number_input("Дренажный шланг за метр (руб)", value=int(m.prices["hvac"]["drain"]))
-            m.prices["hvac"]["pump"] = st.number_input("Монтаж дренажной помпы (руб)", value=int(m.prices["hvac"]["pump"]))
-            m.prices["hvac"]["box"] = st.number_input("Монтаж короба за метр (руб)", value=int(m.prices["hvac"]["box"]))
-            m.prices["hvac"]["chasing_brick"] = st.number_input("Штроба кирпич за метр (руб)", value=int(m.prices["hvac"]["chasing_brick"]))
-            m.prices["hvac"]["chasing_concrete"] = st.number_input("Штроба монолит за метр (руб)", value=int(m.prices["hvac"]["chasing_concrete"]))
-            m.prices["hvac"]["coring"] = st.number_input("Алмазное бурение отверстия (руб)", value=int(m.prices["hvac"]["coring"]))
-        with st.expander("⚡ ЦЕНЫ: ЭЛЕКТРИКА", expanded=False):
-            m.prices["electric"]["point"] = st.number_input("Монтаж точки / подрозетника (руб)", value=int(m.prices["electric"]["point"]))
-            m.prices["electric"]["cable_1.5"] = st.number_input("Кабель 3х1.5 свет за метр (руб)", value=int(m.prices["electric"]["cable_1.5"]))
-            m.prices["electric"]["cable_2.5"] = st.number_input("Кабель 3х2.5 розетки за метр (руб)", value=int(m.prices["electric"]["cable_2.5"]))
-            m.prices["electric"]["cable_4.0"] = st.number_input("Кабель 3х4.0 сила за метр (руб)", value=int(m.prices["electric"]["cable_4.0"]))
-            m.prices["electric"]["corrugation"] = st.number_input("Гофра за метр (руб)", value=int(m.prices["electric"]["corrugation"]))
-            m.prices["electric"]["clips"] = st.number_input("Клипса за штуку (руб)", value=int(m.prices["electric"]["clips"]))
-            m.prices["electric"]["breaker"] = st.number_input("Установка автомата в щит (руб)", value=int(m.prices["electric"]["breaker"]))
-            m.prices["electric"]["chasing"] = st.number_input("Штробление за метр (руб)", value=int(m.prices["electric"]["chasing"]))
-        with st.expander("🚰 ЦЕНЫ: САНТЕХНИКА", expanded=False):
-            m.prices["plumbing"]["point"] = st.number_input("Монтаж точки водоразбора (руб)", value=int(m.prices["plumbing"]["point"]))
-            m.prices["plumbing"]["pipe_16"] = st.number_input("Труба PEX 16мм за метр (руб)", value=int(m.prices["plumbing"]["pipe_16"]))
-            m.prices["plumbing"]["pipe_20"] = st.number_input("Труба PEX 20мм за метр (руб)", value=int(m.prices["plumbing"]["pipe_20"]))
-            m.prices["plumbing"]["collector"] = st.number_input("Сборка коллектора (руб)", value=int(m.prices["plumbing"]["collector"]))
-            m.prices["plumbing"]["fitting"] = st.number_input("Фитинги/Водорозетки за шт (руб)", value=int(m.prices["plumbing"]["fitting"]))
+        draw_text_header("Управление прайс-листом", size=20)
+        for sect_name, sect_rus in [("hvac", "❄️ ЦЕНЫ: КЛИМАТ"), ("electric", "⚡ ЦЕНЫ: ЭЛЕКТРИКА"), ("plumbing", "🚰 ЦЕНЫ: САНТЕХНИКА")]:
+            with st.expander(sect_rus, expanded=False):
+                for k, item in m.prices.get(sect_name, {}).items():
+                    item["Цена"] = st.number_input(f"{item['Наименование']} (руб)", value=int(item["Цена"]), key=f"pr_{k}")
+        
         if st.button("💾 СОХРАНИТЬ ПРАЙС-ЛИСТ НА СЕРВЕРЕ", type="primary", use_container_width=True):
             if m.save_local_prices(): st.success("Прайс-лист успешно зафиксирован!")
             else: st.error("Ошибка сохранения.")
 
 with tab_est:
-    draw_text_header("Итоговая смета инженерии объекта")
+    draw_text_header("Итоговая смета инженерии объекта", size=20)
     grand_total = st.session_state.h_tot + st.session_state.e_tot + st.session_state.p_tot
     st.metric(label="ИТОГОВАЯ СУММА ПОД КЛЮЧ", value=f"{grand_total} руб.")
     full_list = m.h_data + m.e_data + m.p_data
