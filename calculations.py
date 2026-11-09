@@ -1,5 +1,11 @@
 import pandas as pd
 import io
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import Font
 
 class Model:
     def __init__(self):
@@ -20,22 +26,22 @@ class Model:
         self.cc, self.cp, self.cf = 5.0, 6.0, 2
         self.h_data, self.e_data, self.p_data = [], [], []
 
-    def calc_hvac(self, blocks, pipe, mode, pump, box, ch_b, ch_c, core):
+    def calc_hvac(self, b, p, mode, pump, box, ch_b, ch_c, core):
         pr = self.prices["hvac"]
         self.h_data = []
         if mode == "В один этап (Стандарт)":
-            self.h_data.append({"Раздел": "Климат", "Наименование": f"Монтаж кондиционера стандартный ({blocks} шт.)", "Кол-во": blocks, "Ед.изм": "шт.", "Цена": pr["work_standard"], "Сумма": blocks * pr["work_standard"]})
+            self.h_data.append({"Раздел": "Климат", "Наименование": f"Монтаж кондиционера стандартный ({b} шт.)", "Кол-во": b, "Ед.изм": "шт.", "Цена": pr["work_standard"], "Сумма": b * pr["work_standard"]})
         elif mode == "1-й этап (Закладка трасс)":
-            self.h_data.append({"Раздел": "Климат", "Наименование": f"Монтаж кондиционера: 1-й этап закладки ({blocks} шт.)", "Кол-во": blocks, "Ед.изм": "шт.", "Цена": pr["work_stage_1"], "Сумма": blocks * pr["work_stage_1"]})
+            self.h_data.append({"Раздел": "Климат", "Наименование": f"Монтаж кондиционера: 1-й этап закладки ({b} шт.)", "Кол-во": b, "Ед.изм": "шт.", "Цена": pr["work_stage_1"], "Сумма": b * pr["work_stage_1"]})
         elif mode == "2-й этап (Навеска блоков)":
-            self.h_data.append({"Раздел": "Климат", "Наименование": f"Монтаж кондиционера: 2-й этап навески ({blocks} шт.)", "Кол-во": blocks, "Ед.изм": "шт.", "Цена": pr["work_stage_2"], "Сумма": blocks * pr["work_stage_2"]})
+            self.h_data.append({"Раздел": "Климат", "Наименование": f"Монтаж кондиционера: 2-й этап навески ({b} шт.)", "Кол-во": b, "Ед.изм": "шт.", "Цена": pr["work_stage_2"], "Сумма": b * pr["work_stage_2"]})
 
         if mode != "2-й этап (Навеска блоков)":
-            if pipe > 0:
-                self.h_data.append({"Раздел": "Климат", "Наименование": f"Медная фреоновая трасса ({pipe} м.)", "Кол-во": pipe, "Ед.изм": "м.", "Цена": pr["pipe"], "Сумма": pipe * pr["pipe"]})
-                self.h_data.append({"Раздел": "Климат", "Наименование": f"Дренажный шланг ({pipe} м.)", "Кол-во": pipe, "Ед.изм": "м.", "Цена": pr["drain"], "Сумма": pipe * pr["drain"]})
-            if blocks > 0:
-                self.h_data.append({"Раздел": "Климат", "Наименование": f"Кронштейны внешнего блока ({blocks} компл.)", "Кол-во": blocks, "Ед.изм": "компл.", "Цена": pr["bracket"], "Сумма": blocks * pr["bracket"]})
+            if p > 0:
+                self.h_data.append({"Раздел": "Климат", "Наименование": f"Медная фреоновая трасса ({p} м.)", "Кол-во": p, "Ед.изм": "м.", "Цена": pr["pipe"], "Сумма": p * pr["pipe"]})
+                self.h_data.append({"Раздел": "Климат", "Наименование": f"Дренажный шланг ({p} м.)", "Кол-во": p, "Ед.изм": "м.", "Цена": pr["drain"], "Сумма": p * pr["drain"]})
+            if b > 0:
+                self.h_data.append({"Раздел": "Климат", "Наименование": f"Кронштейны внешнего блока ({b} компл.)", "Кол-во": b, "Ед.изм": "компл.", "Цена": pr["bracket"], "Сумма": b * pr["bracket"]})
 
         if pump > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Установка дренажной помпы", "Кол-во": pump, "Ед.изм": "шт.", "Цена": pr["pump"], "Сумма": pump * pr["pump"]})
         if box > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Монтаж декоративного короба", "Кол-во": box, "Ед.изм": "м.", "Цена": pr["box"], "Сумма": box * pr["box"]})
@@ -86,10 +92,52 @@ class Model:
         return buf.getvalue()
 
     def get_pdf_bytes(self, full_list, grand_total):
-        txt = "=========================================\n"
-        txt += "   КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ ПО ИНЖЕНЕРИИ\n"
-        txt += "=========================================\n\n"
-        for i in full_list:
-            txt += f"[{i['Раздел']}] {i['Наименование']}\n  {i['Кол-во']} {i['Ед.изм']} х {i['Цена']} руб. = {i['Сумма']} руб.\n\n"
-        txt += f"-----------------------------------------\nИТОГОВАЯ СТОИМОСТЬ ПОД КЛЮЧ: {grand_total} руб."
-        return io.BytesIO(txt.encode('utf-8'))
+        # Нам нужен шрифт, который есть на серверах Linux и поддерживает русский язык
+        try:
+            pdfmetrics.registerFont(Font('Helvetica-Bold', 'Helvetica-Bold.ttf'))
+        except:
+            pass # Если шрифт встроен по умолчанию
+
+        buf = io.BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+        story = []
+        
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontName='Helvetica', fontSize=18, spaceAfter=20, alignment=1)
+        text_style = ParagraphStyle('TextStyle', parent=styles['Normal'], fontName='Helvetica', fontSize=10, leading=14)
+        
+        story.append(Paragraph("<b>КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ ПО ИНЖЕНЕРИИ</b>", title_style))
+        story.append(Spacer(1, 15))
+        
+        # Заголовки таблицы
+        table_data = [["Razdel", "Naimenovanie", "Kol-vo", "Ed", "Cena", "Summa"]]
+        
+        # Подготавливаем данные (переводим на транслит заголовки для 100% совместимости без внешних файлов шрифтов)
+        for idx, i in enumerate(full_list):
+            table_data.append([
+                str(i["Раздел"]),
+                str(i["Наименование"]),
+                str(i["Кол-во"]),
+                str(i["Ед.изм"]),
+                str(i["Цена"]),
+                str(i["Сумма"])
+            ])
+            
+        table_data.append(["ИТОГО", "ОБЩАЯ СТОИМОСТЬ РАБОТ И МАТЕРИАЛОВ", "", "", "", f"{grand_total} rub."])
+        
+        t = Table(table_data, colWidths=[70, 240, 50, 40, 60, 70])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.grey),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+            ('BOTTOMPADDING', (0,0), (-1,0), 8),
+            ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey),
+            ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
+            ('GRID', (0,0), (-1,-1), 1, colors.black),
+        ]))
+        
+        story.append(t)
+        doc.build(story)
+        buf.seek(0)
+        return buf.getvalue()
