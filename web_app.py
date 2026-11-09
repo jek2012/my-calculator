@@ -74,11 +74,11 @@ if st.session_state.role == "admin": tab_hvac, tab_elec, tab_plumb, tab_coef, ta
 else: tab_hvac, tab_elec, tab_plumb, tab_est = tabs; tab_coef, tab_prices = None, None
 
 with tab_hvac:
-    draw_text_header("Кондиционирование и вентиляция", size=20)
+    draw_text_header("Кондиционирование и вентиляция")
     b = st.number_input("Блоки (шт)", min_value=0, value=0, key="h_b")
     p = st.number_input("Трасса (м)", min_value=0.0, value=0.0, key="h_p")
     mode = st.selectbox("Схема", ["В один этап (Стандарт)", "1-й этап (Закладка трасс)", "2-й этап (Навеска блоков)"])
-    with st.expander("Доп.Работы"):
+    with st.expander("Дополнительные усложнения"):
         pump = st.number_input("Помпы (шт)", min_value=0, value=0, key="h_pump")
         box = st.number_input("Короб (м)", min_value=0.0, value=0.0, key="h_box")
         core = st.number_input("Бурение отверстий (шт)", min_value=0, value=0, key="h_core")
@@ -89,7 +89,7 @@ with tab_hvac:
         st.success(f"Всего по разделу: {st.session_state.h_tot} руб.")
 
 with tab_elec:
-    draw_text_header("Электрика и силовые щиты", size=20)
+    draw_text_header("Электрика и силовые щиты")
     pt = st.number_input("Количество точек (шт)", min_value=0, value=0, key="e_pt")
     ch = st.number_input("Штроба всего (м)", min_value=0.0, value=0.0, key="e_ch")
     eb = st.number_input("Автоматы в щит (шт)", min_value=0, value=0, key="e_eb")
@@ -98,7 +98,7 @@ with tab_elec:
         st.success(f"Всего по разделу: {st.session_state.e_tot} руб.")
 
 with tab_plumb:
-    draw_text_header("Сантехника и Отопление", size=20)
+    draw_text_header("Сантехника и Отопление дома")
     p_pt = st.number_input("Точки водоснабжения (шт)", min_value=0, value=0, key="p_pt")
     col = st.number_input("Коллекторы (шт)", min_value=0, value=0, key="p_col")
     if st.button("Рассчитать сантехнику", type="primary", key="btn_p"):
@@ -107,13 +107,13 @@ with tab_plumb:
 
 if tab_coef:
     with tab_coef:
-        draw_text_header("Нормы расхода материалов", size=20)
+        draw_text_header("Нормы расхода материалов")
         m.cc = st.number_input("Кабель на точку (м)", value=m.cc, key="c_cc")
         m.cp = st.number_input("Труба PEX на точку (м)", value=m.cp, key="c_cp")
 
 if tab_prices:
     with tab_prices:
-        draw_text_header("Управление прайс-листом", size=20)
+        draw_text_header("Управление прайс-листом")
         with st.expander("❄️ ЦЕНЫ: КЛИМАТ", expanded=False):
             m.prices["hvac"]["work_standard"] = st.number_input("Стандартный монтаж (руб)", value=int(m.prices["hvac"]["work_standard"]), key="pr_ws")
             m.prices["hvac"]["work_stage_1"] = st.number_input("Закладка трасс 1-й этап (руб)", value=int(m.prices["hvac"]["work_stage_1"]), key="pr_s1")
@@ -144,7 +144,6 @@ if tab_prices:
         if st.button("💾 СОХРАНИТЬ ПРАЙС-ЛИСТ НА СЕРВЕРЕ", type="primary", use_container_width=True, key="btn_save_p"):
             if m.save_local_prices(): st.success("Прайс-лист успешно зафиксирован!")
             else: st.error("Ошибка сохранения.")
-
 with tab_est:
     draw_text_header("Итоговая смета инженерии объекта", size=20)
     grand_total = st.session_state.h_tot + st.session_state.e_tot + st.session_state.p_tot
