@@ -32,33 +32,32 @@ tabs = st.tabs(t_list)
 if st.session_state.role == "admin": tab_hvac, tab_elec, tab_plumb, tab_coef, tab_prices, tab_est = tabs
 else: tab_hvac, tab_elec, tab_plumb, tab_est = tabs; tab_coef, tab_prices = None, None
 
-# --- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ГЕНЕРАЦИИ ПОЛЕЙ ВВОДА НА ВКЛАДКАХ ---
+# --- ИСПРАВЛЕННАЯ ФУНКЦИЯ: ТЕПЕРЬ КЛЮЧИ СТРОГО УНИКАЛЬНЫЕ ---
 def render_calc_tab(tab, title, section_rus, points_key=None):
     with tab:
         draw_text_header(title, size=20)
         inputs = {}
         points_val = 0
-        sect_code = "hvac" if section_rus == "Климат" else ("electric" if section_rus == "Ед_Изм" else "plumbing")
+        sect_code = "hvac" if section_rus == "Климат" else ("electric" if section_rus == "Электрика" else "plumbing")
         
-        # Если в разделе есть авто-коэффициенты, сначала просим ввести количество главных точек
+        # Добавляем префикс раздела к ключу, чтобы они не дублировались (например, el_p_point и pl_p_point)
         if points_key:
             for k, item in m.prices.get(points_key, {}).items():
                 if item["Тип_Ввода"] == "число" and ("точек" in item["Наименование"] or "блоков" in item["Наименование"]):
-                    points_val = st.number_input(f"{item['Наименование']} ({item['Ед_Изм']})", min_value=0, value=0, key=f"p_{k}")
+                    points_val = st.number_input(f"{item['Наименование']} ({item['Ед.изм']})", min_value=0, value=0, key=f"{sect_code}_p_{k}")
                     inputs[k] = points_val
 
-        # Генерируем поля для всех остальных ручных пунктов "число"
         for k, item in m.prices.get(sect_code, {}).items():
             if item["Тип_Ввода"] == "число" and k not in inputs:
-                inputs[k] = st.number_input(f"{item['Наименование']} ({item['Ед_Изм']})", min_value=0, value=0, key=f"inp_{k}")
+                inputs[k] = st.number_input(f"{item['Наименование']} ({item['Ед.изм']})", min_value=0, value=0, key=f"{sect_code}_inp_{k}")
 
-        if st.button(f"Рассчитать {section_rus.lower()}", type="primary", key=f"btn_{section_rus}"):
+        if st.button(f"Рассчитать {section_rus.lower()}", type="primary", key=f"btn_{sect_code}"):
             res_list, total = m.calc_section(section_rus, inputs, points_qty=points_val)
             st.success(f"Всего по разделу: {total} руб.")
             return total
     return 0
 
-# Отрендеринг вкладок
+# Рендеринг вкладок
 h_t = render_calc_tab(tab_hvac, "Кондиционирование и вентиляция", "Климат", "hvac")
 if h_t: st.session_state.h_tot = h_t
 
@@ -71,8 +70,8 @@ if p_t: st.session_state.p_tot = p_t
 if tab_coef:
     with tab_coef:
         draw_text_header("Нормы расхода материалов", size=20)
-        m.cc = st.number_input("Кабель на точку (м)", value=m.cc)
-        m.cp = st.number_input("Труба PEX на точку (м)", value=m.cp)
+        m.cc = st.number_input("Кабель на точку (м)", value=m.cc, key="coef_cc")
+        m.cp = st.number_input("Труба PEX на точку (м)", value=m.cp, key="coef_cp")
 
 if tab_prices:
     with tab_prices:
@@ -80,7 +79,7 @@ if tab_prices:
         for sect_name, sect_rus in [("hvac", "❄️ ЦЕНЫ: КЛИМАТ"), ("electric", "⚡ ЦЕНЫ: ЭЛЕКТРИКА"), ("plumbing", "🚰 ЦЕНЫ: САНТЕХНИКА")]:
             with st.expander(sect_rus, expanded=False):
                 for k, item in m.prices.get(sect_name, {}).items():
-                    item["Цена"] = st.number_input(f"{item['Наименование']} (руб)", value=int(item["Цена"]), key=f"pr_{k}")
+                    item["Цена"] = st.number_input(f"{item['Наименование']} (руб)", value=int(item["Цена"]), key=f"pr_{sect_name}_{k}")
         
         if st.button("💾 СОХРАНИТЬ ПРАЙС-ЛИСТ НА СЕРВЕРЕ", type="primary", use_container_width=True):
             if m.save_local_prices(): st.success("Прайс-лист успешно зафиксирован!")
