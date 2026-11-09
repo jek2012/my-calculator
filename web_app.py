@@ -99,7 +99,7 @@ if tab_prices:
     with tab_prices:
         draw_text_header("Управление прайс-листом", size=20)
         
-        with st.expander("❄️ ЦЕНЫ: КЛИМАТ", expanded=True):
+        with st.expander("❄️ ЦЕНЫ: КЛИМАТ", expanded=False):
             m.prices["hvac"]["work_standard"] = st.number_input("Стандартный монтаж (руб)", value=int(m.prices["hvac"]["work_standard"]))
             m.prices["hvac"]["work_stage_1"] = st.number_input("Закладка трасс 1-й этап (руб)", value=int(m.prices["hvac"]["work_stage_1"]))
             m.prices["hvac"]["work_stage_2"] = st.number_input("Навеска блоков 2-й этап (руб)", value=int(m.prices["hvac"]["work_stage_2"]))
@@ -112,7 +112,7 @@ if tab_prices:
             m.prices["hvac"]["chasing_concrete"] = st.number_input("Штроба монолит за метр (руб)", value=int(m.prices["hvac"]["chasing_concrete"]))
             m.prices["hvac"]["coring"] = st.number_input("Алмазное бурение отверстия (руб)", value=int(m.prices["hvac"]["coring"]))
 
-        with st.expander("⚡ ЦЕНЫ: ЭЛЕКТРИКА", expanded=True):
+        with st.expander("⚡ ЦЕНЫ: ЭЛЕКТРИКА", expanded=False):
             m.prices["electric"]["point"] = st.number_input("Монтаж точки / подрозетника (руб)", value=int(m.prices["electric"]["point"]))
             m.prices["electric"]["cable_1.5"] = st.number_input("Кабель 3х1.5 свет за метр (руб)", value=int(m.prices["electric"]["cable_1.5"]))
             m.prices["electric"]["cable_2.5"] = st.number_input("Кабель 3х2.5 розетки за метр (руб)", value=int(m.prices["electric"]["cable_2.5"]))
@@ -122,7 +122,7 @@ if tab_prices:
             m.prices["electric"]["breaker"] = st.number_input("Установка автомата в щит (руб)", value=int(m.prices["electric"]["breaker"]))
             m.prices["electric"]["chasing"] = st.number_input("Штробление за метр (руб)", value=int(m.prices["electric"]["chasing"]))
 
-        with st.expander("🚰 ЦЕНЫ: САНТЕХНИКА", expanded=True):
+        with st.expander("🚰 ЦЕНЫ: САНТЕХНИКА", expanded=False):
             m.prices["plumbing"]["point"] = st.number_input("Монтаж точки водоразбора (руб)", value=int(m.prices["plumbing"]["point"]))
             m.prices["plumbing"]["pipe_16"] = st.number_input("Труба PEX 16мм за метр (руб)", value=int(m.prices["plumbing"]["pipe_16"]))
             m.prices["plumbing"]["pipe_20"] = st.number_input("Труба PEX 20мм за метр (руб)", value=int(m.prices["plumbing"]["pipe_20"]))
