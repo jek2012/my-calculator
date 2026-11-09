@@ -5,6 +5,9 @@ from calculations import Model
 st.set_page_config(page_title="Калькулятор смет под ключ", layout="centered")
 P_ADMIN, P_GUEST = "admin", "123"
 
+# ВПИШИТЕ СЮДА ССЫЛКУ НА ВАШ GITHUB (Для чтения прайса)
+REPO_URL = "https://github.com" + st.experimental_user.to_dict().get("username", "bober") + "/my-calculator" if hasattr(st, "experimental_user") else "https://github.combober/my-calculator"
+
 if "auth" not in st.session_state:
     st.session_state.auth, st.session_state.role = False, None
 
@@ -22,6 +25,9 @@ if "model" not in st.session_state:
     st.session_state.h_tot, st.session_state.e_tot, st.session_state.p_tot = 0, 0, 0
 
 m = st.session_state.model
+# ВСЕГДА ПОДТЯГИВАЕМ СВЕЖИЙ ПРАЙС ИЗ ИНТЕРНЕТА ПЕРЕД СТАРТОМ
+m.load_remote_prices(REPO_URL)
+
 st.title("🏗️ Инженерный калькулятор смет")
 st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Рабочий/Гость'}")
 
@@ -72,36 +78,7 @@ if tab_coef:
 if tab_prices:
     with tab_prices:
         st.header("Управление прайс-листом")
-        
-        with st.expander("❄️ ЦЕНЫ: КЛИМАТ", expanded=True):
-            m.prices["hvac"]["work_standard"] = st.number_input("Стандартный монтаж (руб)", value=int(m.prices["hvac"]["work_standard"]))
-            m.prices["hvac"]["work_stage_1"] = st.number_input("Закладка трасс 1-й этап (руб)", value=int(m.prices["hvac"]["work_stage_1"]))
-            m.prices["hvac"]["work_stage_2"] = st.number_input("Навеска блоков 2-й этап (руб)", value=int(m.prices["hvac"]["work_stage_2"]))
-            m.prices["hvac"]["pipe"] = st.number_input("Труба медная за метр (руб)", value=int(m.prices["hvac"]["pipe"]))
-            m.prices["hvac"]["bracket"] = st.number_input("Кронштейны внешнего блока (руб)", value=int(m.prices["hvac"]["bracket"]))
-            m.prices["hvac"]["drain"] = st.number_input("Дренажный шланг за метр (руб)", value=int(m.prices["hvac"]["drain"]))
-            m.prices["hvac"]["pump"] = st.number_input("Монтаж дренажной помпы (руб)", value=int(m.prices["hvac"]["pump"]))
-            m.prices["hvac"]["box"] = st.number_input("Монтаж короба за метр (руб)", value=int(m.prices["hvac"]["box"]))
-            m.prices["hvac"]["chasing_brick"] = st.number_input("Штроба кирпич за метр (руб)", value=int(m.prices["hvac"]["chasing_brick"]))
-            m.prices["hvac"]["chasing_concrete"] = st.number_input("Штроба монолит за метр (руб)", value=int(m.prices["hvac"]["chasing_concrete"]))
-            m.prices["hvac"]["coring"] = st.number_input("Алмазное бурение отверстия (руб)", value=int(m.prices["hvac"]["coring"]))
-
-        with st.expander("⚡ ЦЕНЫ: ЭЛЕКТРИКА", expanded=True):
-            m.prices["electric"]["point"] = st.number_input("Монтаж точки / подрозетника (руб)", value=int(m.prices["electric"]["point"]))
-            m.prices["electric"]["cable_1.5"] = st.number_input("Кабель 3х1.5 свет за метр (руб)", value=int(m.prices["electric"]["cable_1.5"]))
-            m.prices["electric"]["cable_2.5"] = st.number_input("Кабель 3х2.5 розетки за метр (руб)", value=int(m.prices["electric"]["cable_2.5"]))
-            m.prices["electric"]["cable_4.0"] = st.number_input("Кабель 3х4.0 сила за метр (руб)", value=int(m.prices["electric"]["cable_4.0"]))
-            m.prices["electric"]["corrugation"] = st.number_input("Гофра за метр (руб)", value=int(m.prices["electric"]["corrugation"]))
-            m.prices["electric"]["clips"] = st.number_input("Клипса за штуку (руб)", value=int(m.prices["electric"]["clips"]))
-            m.prices["electric"]["breaker"] = st.number_input("Установка автомата в щит (руб)", value=int(m.prices["electric"]["breaker"]))
-            m.prices["electric"]["chasing"] = st.number_input("Штробление за метр (руб)", value=int(m.prices["electric"]["chasing"]))
-
-        with st.expander("🚰 ЦЕНЫ: САНТЕХНИКА", expanded=True):
-            m.prices["plumbing"]["point"] = st.number_input("Монтаж точки водоразбора (руб)", value=int(m.prices["plumbing"]["point"]))
-            m.prices["plumbing"]["pipe_16"] = st.number_input("Труба PEX 16мм за метр (руб)", value=int(m.prices["plumbing"]["pipe_16"]))
-            m.prices["plumbing"]["pipe_20"] = st.number_input("Труба PEX 20мм за метр (руб)", value=int(m.prices["plumbing"]["pipe_20"]))
-            m.prices["plumbing"]["collector"] = st.number_input("Сборка коллектора (руб)", value=int(m.prices["plumbing"]["collector"]))
-            m.prices["plumbing"]["fitting"] = st.number_input("Фитинги/Водорозетки за шт (руб)", value=int(m.prices["plumbing"]["fitting"]))
+        st.info("Ваши цены надёжно зафиксированы в файле 'prices.txt' на GitHub! Чтобы обновить расценки на постоянной основе для всех устройств, просто измените цифры в этом файле через браузер. Калькулятор мгновенно подхватит новые значения.")
 
 with tab_est:
     st.header("Итоговая смета объекта")
@@ -115,7 +92,7 @@ with tab_est:
         with col1:
             st.download_button(label="🟢 СКАЧАТЬ В EXCEL", data=m.get_excel_bytes(full_list, grand_total), file_name="Смета.xlsx", use_container_width=True)
         with col2:
-            st.download_button(label="🔵 СКАЧАТЬ В PDF/ТЕКСТ", data=m.get_pdf_bytes(full_list, grand_total), file_name="КП_Инженерия.txt", mime="text/plain", use_container_width=True)
+            st.download_button(label="🔵 СКАЧАТЬ В PDF", data=m.get_pdf_bytes(full_list, grand_total), file_name="КП_Инженерия.txt", mime="text/plain", use_container_width=True)
     else: st.info("Проведите расчет в разделах.")
 
 if st.sidebar.button("Выйти из системы"): st.session_state.auth = False; st.rerun()
