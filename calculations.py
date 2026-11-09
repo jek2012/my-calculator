@@ -1,4 +1,4 @@
-import pandas as pd, io, urllib.request
+import pandas as pd, io, os
 
 class Model:
     def __init__(self):
@@ -18,32 +18,44 @@ class Model:
         }
         self.cc, self.cp, self.cf = 5.0, 6.0, 2
         self.h_data, self.e_data, self.p_data = [], [], []
+        self.load_local_prices()
 
-    def load_remote_prices(self, repo_url):
+    def load_local_prices(self):
+        # Чтение сохраненного прайса из памяти сервера
+        if os.path.exists("local_prices.txt"):
+            try:
+                p_map = {}
+                with open("local_prices.txt", "r", encoding="utf-8") as f:
+                    for line in f:
+                        if "=" in line:
+                            k, v = line.strip().split("=")
+                            p_map[k] = float(v)
+                
+                for k in self.prices["hvac"].keys():
+                    if k in p_map: self.prices["hvac"][k] = p_map[k]
+                    
+                mapping_e = {"point": "point_el", "cable_1.5": "cable_1.5", "cable_2.5": "cable_2.5", "cable_4.0": "cable_4.0", "corrugation": "corrugation", "clips": "clips", "breaker": "breaker", "chasing": "chasing_el"}
+                for k, target in mapping_e.items():
+                    if target in p_map: self.prices["electric"][k] = p_map[target]
+                    
+                mapping_p = {"point": "point_pl", "pipe_16": "pipe_16", "pipe_20": "pipe_20", "collector": "collector", "fitting": "fitting"}
+                for k, target in mapping_p.items():
+                    if target in p_map: self.prices["plumbing"][k] = p_map[target]
+            except: pass
+
+    def save_local_prices(self):
+        # Запись новых измененных админом цен в файл на сервере
         try:
-            res = urllib.request.urlopen(repo_url + "/raw/main/prices.txt")
-            lines = res.read().decode('utf-8').splitlines()
-            p_map = {}
-            for line in lines:
-                if "=" in line:
-                    k, v = line.strip().split("=")
-                    p_map[k] = float(v)
-            
-            # Обновляем климат
-            for k in self.prices["hvac"].keys():
-                if k in p_map: self.prices["hvac"][k] = p_map[k]
+            with open("local_prices.txt", "w", encoding="utf-8") as f:
+                for k, v in self.prices["hvac"].items(): f.write(f"{k}={v}\n")
                 
-            # Обновляем электрику
-            mapping_e = {"point": "point_el", "cable_1.5": "cable_1.5", "cable_2.5": "cable_2.5", "cable_4.0": "cable_4.0", "corrugation": "corrugation", "clips": "clips", "breaker": "breaker", "chasing": "chasing_el"}
-            for k, target in mapping_e.items():
-                if target in p_map: self.prices["electric"][k] = p_map[target]
+                mapping_e = {"point_el": "point", "cable_1.5": "cable_1.5", "cable_2.5": "cable_2.5", "cable_4.0": "cable_4.0", "corrugation": "corrugation", "clips": "clips", "breaker": "breaker", "chasing_el": "chasing"}
+                for name_in_file, k in mapping_e.items(): f.write(f"{name_in_file}={self.prices['electric'][k]}\n")
                 
-            # Обновляем сантехнику
-            mapping_p = {"point": "point_pl", "pipe_16": "pipe_16", "pipe_20": "pipe_20", "collector": "collector", "fitting": "fitting"}
-            for k, target in mapping_p.items():
-                if target in p_map: self.prices["plumbing"][k] = p_map[target]
-        except:
-            pass # Если файла нет, считаем по базовым из кода
+                mapping_p = {"point_pl": "point", "pipe_16": "pipe_16", "pipe_20": "pipe_20", "collector": "collector", "fitting": "fitting"}
+                for name_in_file, k in mapping_p.items(): f.write(f"{name_in_file}={self.prices['plumbing'][k]}\n")
+            return True
+        except: return False
 
     def calc_hvac(self, blocks, pipe, mode, pump, box, ch_b, ch_c, core):
         pr = self.prices["hvac"]; self.h_data = []
@@ -77,7 +89,7 @@ class Model:
             {"Раздел": "Электрика", "Наименование": "Кабель ВВГнг 3х1.5 (Свет)", "Кол-во": c_15, "Ед.изм": "м.", "Цена": pr["cable_1.5"], "Сумма": c_15 * pr["cable_1.5"]},
             {"Раздел": "Электрика", "Наименование": "Кабель ВВГнг 3х2.5 (Розетки)", "Кол-во": c_25, "Ед.изм": "м.", "Цена": pr["cable_2.5"], "Сумма": c_25 * pr["cable_2.5"]},
             {"Раздел": "Электрика", "Наименование": "Кабель ВВГнг 3х4.0 (Силовой)", "Кол-во": c_40, "Ед.изм": "м.", "Цена": pr["cable_4.0"], "Сумма": c_40 * pr["cable_4.0"]},
-            {"Раздел": "Электрика", "Наименование": "Гофра защитная", "Кол-во": total_cable, "Ед.изм": "м.", "Цена": pr["corrugation"], "Сумма": total_cable * pr["corrugation"]},
+            {"Раздел": "Электрика", "Наименование": "Гофра защитная", "Кол-во": total_cable, "Ед.изм": "m.", "Цена": pr["corrugation"], "Сумма": total_cable * pr["corrugation"]},
             {"Раздел": "Электрика", "Наименование": "Крепеж/Клипсы для гофры", "Кол-во": clips_qty, "Ед.изм": "шт.", "Цена": pr["clips"], "Сумма": clips_qty * pr["clips"]}
         ]
         return sum(i["Сумма"] for i in self.e_data)
@@ -88,8 +100,8 @@ class Model:
         self.p_data = [
             {"Раздел": "Сантехника", "Наименование": f"Монтаж точек водоразбора ({pt} шт.)", "Кол-во": pt, "Ед.изм": "шт.", "Цена": pr["point"], "Сумма": pt * pr["point"]},
             {"Раздел": "Сантехника", "Наименование": "Установка коллекторов", "Кол-во": col, "Ед.изм": "шт.", "Цена": pr["collector"], "Сумма": col * pr["collector"]},
-            {"Раздел": "Сантехника", "Наименование": "Труба PEX 16мм", "Кол-во": p_16, "Ед.изм": "м.", "Цена": pr["pipe_16"], "Сумма": p_16 * pr["pipe_16"]},
-            {"Раздел": "Сантехника", "Наименование": "Труба PEX 20мм (магистраль)", "Кол-во": p_20, "Ед.изм": "м.", "Цена": pr["pipe_20"], "Сумма": p_20 * pr["pipe_20"]},
+            {"Раздел": "Сантехника", "Наименование": "Труба PEX 16mm", "Кол-во": p_16, "Ед.изм": "м.", "Цена": pr["pipe_16"], "Сумма": p_16 * pr["pipe_16"]},
+            {"Раздел": "Сантехника", "Наименование": "Труба PEX 20mm (magistral)", "Кол-во": p_20, "Ед.изм": "м.", "Цена": pr["pipe_20"], "Сумма": p_20 * pr["pipe_20"]},
             {"Раздел": "Сантехника", "Наименование": "Аксиальные фитинги/водорозетки", "Кол-во": fit, "Ед.изм": "шт.", "Цена": pr["fitting"], "Сумма": fit * pr["fitting"]}
         ]
         return sum(i["Сумма"] for i in self.p_data)
