@@ -70,7 +70,7 @@ m = st.session_state.model
 
 # Главный заголовок сайта в виде фирменной карточки
 draw_text_header("Инженерный калькулятор смет", is_main=True)
-st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Гость'}")
+st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Рабочий/Гость'}")
 
 t_list = ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "📊 Расход", "💰 Цены", "🧾 Итог"] if st.session_state.role == "admin" else ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "🧾 Итог"]
 tabs = st.tabs(t_list)
@@ -79,7 +79,7 @@ if st.session_state.role == "admin": tab_hvac, tab_elec, tab_plumb, tab_coef, ta
 else: tab_hvac, tab_elec, tab_plumb, tab_est = tabs; tab_coef, tab_prices = None, None
 
 with tab_hvac:
-    draw_text_header("Кондиционирование и вентиляция", size=20)
+    draw_text_header("Кондиционирование и вентиляция")
     b = st.number_input("Блоки (шт)", min_value=0, value=0)
     p = st.number_input("Трасса (м)", min_value=0.0, value=0.0)
     mode = st.selectbox("Схема", ["В один этап (Стандарт)", "1-й этап (Закладка трасс)", "2-й этап (Навеска блоков)"])
@@ -94,7 +94,7 @@ with tab_hvac:
         st.success(f"Всего: {st.session_state.h_tot} руб.")
 
 with tab_elec:
-    draw_text_header("Электрика и силовые щиты", size=20)
+    draw_text_header("Электрика и силовые щиты")
     pt = st.number_input("Количество точек (шт)", min_value=0, value=0)
     ch = st.number_input("Штроба всего (м)", min_value=0.0, value=0.0)
     eb = st.number_input("Автоматы в щит (шт)", min_value=0, value=0)
@@ -103,7 +103,7 @@ with tab_elec:
         st.success(f"Всего: {st.session_state.e_tot} руб.")
 
 with tab_plumb:
-    draw_text_header("Сантехника и Отопление дома", size=20)
+    draw_text_header("Сантехника и Отопление дома")
     p_pt = st.number_input("Точки водоснабжения (шт)", min_value=0, value=0)
     col = st.number_input("Коллекторы (шт)", min_value=0, value=0)
     if st.button("Рассчитать сантехнику", type="primary"):
@@ -112,13 +112,13 @@ with tab_plumb:
 
 if tab_coef:
     with tab_coef:
-        draw_text_header("Нормы расхода материалов", size=20)
+        draw_text_header("Нормы расхода материалов")
         m.cc = st.number_input("Кабель на точку (м)", value=m.cc)
         m.cp = st.number_input("Труба PEX на точку (м)", value=m.cp)
 
 if tab_prices:
     with tab_prices:
-        draw_text_header("Управление прайс-листом", size=20)
+        draw_text_header("Управление прайс-листом")
         
         with st.expander("❄️ ЦЕНЫ: КЛИМАТ", expanded=False):
             m.prices["hvac"]["work_standard"] = st.number_input("Стандартный монтаж (руб)", value=int(m.prices["hvac"]["work_standard"]))
@@ -155,7 +155,7 @@ if tab_prices:
             else: st.error("Ошибка сохранения файла на сервере.")
 
 with tab_est:
-    draw_text_header("Итоговая смета инженерии объекта", size=20)
+    draw_text_header("Итоговая смета инженерии объекта")
     grand_total = st.session_state.h_tot + st.session_state.e_tot + st.session_state.p_tot
     st.metric(label="ИТОГОВАЯ СУММА ПОД КЛЮЧ", value=f"{grand_total} руб.")
 
