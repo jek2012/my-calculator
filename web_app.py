@@ -217,5 +217,3 @@ with tab_est:
     else: st.info("Проведите расчет в разделах.")
 
 if st.sidebar.button("Выйти из системы", key="btn_logout"): st.session_state.auth = False; st.rerun()
-
-if st.sidebar.button("Выйти из системы", key="btn_logout"): st.session_state.auth = False; st.rerun()
