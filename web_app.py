@@ -5,27 +5,27 @@ from calculations import Model
 st.set_page_config(page_title="Калькулятор смет под ключ", layout="centered")
 P_ADMIN, P_GUEST = "admin", "123"
 
-# --- ПРОФЕССИОНАЛЬНАЯ ФУНКЦИЯ ДЛЯ АДАПТИВНЫХ ЗАГОЛОВКОВ-КАРТОЧЕК ---
-# padding и border-radius делают красивую подложку, а 5.5vw адаптирует текст под экран телефона
+# --- ФУНКЦИЯ С ОГРАНИЧЕНИЕМ МАКСИМАЛЬНОГО РАЗМЕРА ШРИФТА ---
+# clamp(минимальный, адаптивный, максимальный) — идеальное решение для адаптивности
 def draw_text_header(text, is_main=False):
     emoji = "🏗️ " if is_main else ""
+    margin_bottom = "20px" if is_main else "10px"
     
     if is_main:
-        # Стили для главного баннера: легкий фон, скругление, отступы и адаптивный шрифт
         html_code = f"""
         <div style="
             background: rgba(255, 255, 255, 0.05);
             border-left: 5px solid #1f538d;
             padding: 15px 20px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: {margin_bottom};
             margin-top: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         ">
             <span style="font-size: 22px; vertical-align: middle;">{emoji}</span>
             <span style="
                 font-family: 'Segoe UI', Arial, sans-serif; 
-                font-size: calc(18px + 1.5vw); 
+                font-size: clamp(20px, 4vw, 26px); 
                 font-weight: 800; 
                 color: currentColor;
                 line-height: 1.3;
@@ -33,11 +33,10 @@ def draw_text_header(text, is_main=False):
         </div>
         """
     else:
-        # Стили для обычных подзаголовков внутри вкладок (не рвутся уродливо, аккуратно переносятся)
         html_code = f"""
         <div style="
             font-family: 'Segoe UI', Arial, sans-serif; 
-            font-size: calc(16px + 0.8vw); 
+            font-size: clamp(16px, 2.5vw, 20px); 
             font-weight: 600; 
             color: currentColor; 
             line-height: 1.4;
@@ -49,7 +48,6 @@ def draw_text_header(text, is_main=False):
         """
     st.markdown(html_code, unsafe_allow_html=True)
 
-# Экран ввода пароля
 if "auth" not in st.session_state:
     st.session_state.auth, st.session_state.role = False, None
 
@@ -68,9 +66,8 @@ if "model" not in st.session_state:
 
 m = st.session_state.model
 
-# Главный заголовок сайта в виде фирменной карточки
 draw_text_header("Инженерный калькулятор смет", is_main=True)
-st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Гость'}")
+st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Рабочий/Гость'}")
 
 t_list = ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "📊 Расход", "💰 Цены", "🧾 Итог"] if st.session_state.role == "admin" else ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "🧾 Итог"]
 tabs = st.tabs(t_list)
@@ -119,7 +116,6 @@ if tab_coef:
 if tab_prices:
     with tab_prices:
         draw_text_header("Управление прайс-листом")
-        
         with st.expander("❄️ ЦЕНЫ: КЛИМАТ", expanded=False):
             m.prices["hvac"]["work_standard"] = st.number_input("Стандартный монтаж (руб)", value=int(m.prices["hvac"]["work_standard"]))
             m.prices["hvac"]["work_stage_1"] = st.number_input("Закладка трасс 1-й этап (руб)", value=int(m.prices["hvac"]["work_stage_1"]))
@@ -132,7 +128,6 @@ if tab_prices:
             m.prices["hvac"]["chasing_brick"] = st.number_input("Штроба кирпич за метр (руб)", value=int(m.prices["hvac"]["chasing_brick"]))
             m.prices["hvac"]["chasing_concrete"] = st.number_input("Штроба монолит за метр (руб)", value=int(m.prices["hvac"]["chasing_concrete"]))
             m.prices["hvac"]["coring"] = st.number_input("Алмазное бурение отверстия (руб)", value=int(m.prices["hvac"]["coring"]))
-
         with st.expander("⚡ ЦЕНЫ: ЭЛЕКТРИКА", expanded=False):
             m.prices["electric"]["point"] = st.number_input("Монтаж точки / подрозетника (руб)", value=int(m.prices["electric"]["point"]))
             m.prices["electric"]["cable_1.5"] = st.number_input("Кабель 3х1.5 свет за метр (руб)", value=int(m.prices["electric"]["cable_1.5"]))
@@ -142,23 +137,20 @@ if tab_prices:
             m.prices["electric"]["clips"] = st.number_input("Клипса за штуку (руб)", value=int(m.prices["electric"]["clips"]))
             m.prices["electric"]["breaker"] = st.number_input("Установка автомата в щит (руб)", value=int(m.prices["electric"]["breaker"]))
             m.prices["electric"]["chasing"] = st.number_input("Штробление за метр (руб)", value=int(m.prices["electric"]["chasing"]))
-
         with st.expander("🚰 ЦЕНЫ: САНТЕХНИКА", expanded=False):
             m.prices["plumbing"]["point"] = st.number_input("Монтаж точки водоразбора (руб)", value=int(m.prices["plumbing"]["point"]))
             m.prices["plumbing"]["pipe_16"] = st.number_input("Труба PEX 16мм за метр (руб)", value=int(m.prices["plumbing"]["pipe_16"]))
             m.prices["plumbing"]["pipe_20"] = st.number_input("Труба PEX 20мм за метр (руб)", value=int(m.prices["plumbing"]["pipe_20"]))
             m.prices["plumbing"]["collector"] = st.number_input("Сборка коллектора (руб)", value=int(m.prices["plumbing"]["collector"]))
             m.prices["plumbing"]["fitting"] = st.number_input("Фитинги/Водорозетки за шт (руб)", value=int(m.prices["plumbing"]["fitting"]))
-
         if st.button("💾 СОХРАНИТЬ ПРАЙС-ЛИСТ НА СЕРВЕРЕ", type="primary", use_container_width=True):
-            if m.save_local_prices(): st.success("Прайс-лист успешно перезаписан и зафиксирован для всех пользователей!")
-            else: st.error("Ошибка сохранения файла на сервере.")
+            if m.save_local_prices(): st.success("Прайс-лист успешно зафиксирован!")
+            else: st.error("Ошибка сохранения.")
 
 with tab_est:
     draw_text_header("Итоговая смета инженерии объекта")
     grand_total = st.session_state.h_tot + st.session_state.e_tot + st.session_state.p_tot
     st.metric(label="ИТОГОВАЯ СУММА ПОД КЛЮЧ", value=f"{grand_total} руб.")
-
     full_list = m.h_data + m.e_data + m.p_data
     if full_list:
         st.dataframe(pd.DataFrame(full_list)[["Раздел", "Наименование", "Кол-во", "Ед.изм", "Цена", "Сумма"]], use_container_width=True)
