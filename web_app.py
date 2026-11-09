@@ -117,7 +117,7 @@ with tab_est:
         st.dataframe(pd.DataFrame(full_list)[["Раздел", "Наименование", "Кол-во", "Ед.изм", "Цена", "Сумма"]], use_container_width=True)
         col1, col2 = st.columns(2)
         with col1: st.download_button(label="🟢 СКАЧАТЬ В EXCEL", data=m.get_excel_bytes(full_list, grand_total), file_name="Смета.xlsx", use_container_width=True)
-        with col2: st.download_button(label="🔵 СКАЧАТЬ В PDF", data=m.get_pdf_bytes(full_list, grand_total), file_name="КП_Инженерия.txt", mime="text/plain", use_container_width=True)
+        with col2: st.download_button(label="🔵 СКАЧАТЬ В ТЕКСТ", data=m.get_txt_bytes(full_list, grand_total), file_name="КП_Инженерия.txt", mime="text/plain", use_container_width=True)
     else: st.info("Проведите расчет в разделах.")
 
 if st.sidebar.button("Выйти из системы"): st.session_state.auth = False; st.rerun()
