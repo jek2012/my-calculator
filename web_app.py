@@ -5,28 +5,35 @@ from calculations import Model
 st.set_page_config(page_title="Калькулятор смет под ключ", layout="centered")
 P_ADMIN, P_GUEST = "admin", "123"
 
-# --- ОБНОВЛЕННАЯ ФУНКЦИЯ УМНЫХ ЗАГОЛОВКОВ ---
-# fill="currentColor" заставляет буквы менять цвет: черные на светлом фоне, белые на темном!
-def draw_svg_header(text, size=24, height=50, is_main=False):
-    font_weight = "bold" if is_main else "normal"
-    y_pos = 35 if is_main else 32
+# --- ФУНКЦИЯ ДЛЯ КРУПНЫХ, НЕБЬЮЩИХСЯ ЗАГОЛОВКОВ (ЧЕРЕЗ СТИЛИ) ---
+# white-space: nowrap запрещает тексту переноситься на новую строку и ломать слова!
+def draw_text_header(text, size=24, is_main=False):
     emoji = "🏗️ " if is_main else ""
+    margin_bottom = "20px" if is_main else "10px"
     
-    svg_code = f"""
-    <svg xmlns="http://w3.org" width="100%" height="{height}px" viewBox="0 0 800 {height}" preserveAspectRatio="xMinYMid meet">
-        <text x="0" y="{y_pos}" font-family="Arial, sans-serif" font-size="{size}px" font-weight="{font_weight}" fill="currentColor">
-            {emoji}{text}
-        </text>
-    </svg>
+    html_code = f"""
+    <div style="
+        font-family: Arial, sans-serif; 
+        font-size: {size}px; 
+        font-weight: bold; 
+        color: currentColor; 
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis;
+        margin-bottom: {margin_bottom};
+        margin-top: 10px;
+    ">
+        {emoji}{text}
+    </div>
     """
-    st.markdown(svg_code, unsafe_allow_html=True)
+    st.markdown(html_code, unsafe_allow_html=True)
 
 # Экран ввода пароля
 if "auth" not in st.session_state:
     st.session_state.auth, st.session_state.role = False, None
 
 if not st.session_state.auth:
-    draw_svg_header("Вход в Калькулятор Смет", size=28, height=60, is_main=True)
+    draw_text_header("Вход в Калькулятор Смет", size=26, is_main=True)
     user_pass = st.text_input("Введите код доступа:", type="password")
     if st.button("Войти", type="primary", use_container_width=True):
         if user_pass == P_ADMIN: st.session_state.auth, st.session_state.role = True, "admin"; st.rerun()
@@ -40,9 +47,9 @@ if "model" not in st.session_state:
 
 m = st.session_state.model
 
-# Главный заголовок
-draw_svg_header("Инженерный калькулятор смет", size=32, height=60, is_main=True)
-st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Рабочий/Гость'}")
+# Главный заголовок сайта
+draw_text_header("Инженерный калькулятор смет", size=28, is_main=True)
+st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Гость'}")
 
 t_list = ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "📊 Расход", "💰 Цены", "🧾 Итог"] if st.session_state.role == "admin" else ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "🧾 Итог"]
 tabs = st.tabs(t_list)
@@ -51,7 +58,7 @@ if st.session_state.role == "admin": tab_hvac, tab_elec, tab_plumb, tab_coef, ta
 else: tab_hvac, tab_elec, tab_plumb, tab_est = tabs; tab_coef, tab_prices = None, None
 
 with tab_hvac:
-    draw_svg_header("Кондиционирование и вентиляция", size=24, height=45)
+    draw_text_header("Кондиционирование и вентиляция", size=20)
     b = st.number_input("Блоки (шт)", min_value=0, value=0)
     p = st.number_input("Трасса (м)", min_value=0.0, value=0.0)
     mode = st.selectbox("Схема", ["В один этап (Стандарт)", "1-й этап (Закладка трасс)", "2-й этап (Навеска блоков)"])
@@ -66,7 +73,7 @@ with tab_hvac:
         st.success(f"Всего: {st.session_state.h_tot} руб.")
 
 with tab_elec:
-    draw_svg_header("Электрика и силовые щиты", size=24, height=45)
+    draw_text_header("Электрика и силовые щиты", size=20)
     pt = st.number_input("Количество точек (шт)", min_value=0, value=0)
     ch = st.number_input("Штроба всего (м)", min_value=0.0, value=0.0)
     eb = st.number_input("Автоматы в щит (шт)", min_value=0, value=0)
@@ -75,7 +82,7 @@ with tab_elec:
         st.success(f"Всего: {st.session_state.e_tot} руб.")
 
 with tab_plumb:
-    draw_svg_header("Сантехника и Отопление дома", size=24, height=45)
+    draw_text_header("Сантехника и Отопление дома", size=20)
     p_pt = st.number_input("Точки водоснабжения (шт)", min_value=0, value=0)
     col = st.number_input("Коллекторы (шт)", min_value=0, value=0)
     if st.button("Рассчитать сантехнику", type="primary"):
@@ -84,13 +91,13 @@ with tab_plumb:
 
 if tab_coef:
     with tab_coef:
-        draw_svg_header("Нормы расхода материалов", size=24, height=45)
+        draw_text_header("Нормы расхода материалов", size=20)
         m.cc = st.number_input("Кабель на точку (м)", value=m.cc)
         m.cp = st.number_input("Труба PEX на точку (м)", value=m.cp)
 
 if tab_prices:
     with tab_prices:
-        draw_svg_header("Управление прайс-листом", size=24, height=45)
+        draw_text_header("Управление прайс-листом", size=20)
         
         with st.expander("❄️ ЦЕНЫ: КЛИМАТ", expanded=True):
             m.prices["hvac"]["work_standard"] = st.number_input("Стандартный монтаж (руб)", value=int(m.prices["hvac"]["work_standard"]))
@@ -124,10 +131,10 @@ if tab_prices:
 
         if st.button("💾 СОХРАНИТЬ ПРАЙС-ЛИСТ НА СЕРВЕРЕ", type="primary", use_container_width=True):
             if m.save_local_prices(): st.success("Прайс-лист успешно перезаписан и зафиксирован для всех пользователей!")
-            else: st.error("Ошибка保存 файла на сервере.")
+            else: st.error("Ошибка сохранения файла на сервере.")
 
 with tab_est:
-    draw_svg_header("Итоговая смета инженерии объекта", size=24, height=45)
+    draw_text_header("Итоговая смета инженерии объекта", size=20)
     grand_total = st.session_state.h_tot + st.session_state.e_tot + st.session_state.p_tot
     st.metric(label="ИТОГОВАЯ СУММА ПОД КЛЮЧ", value=f"{grand_total} руб.")
 
@@ -136,7 +143,7 @@ with tab_est:
         st.dataframe(pd.DataFrame(full_list)[["Раздел", "Наименование", "Кол-во", "Ед.изм", "Цена", "Сумма"]], use_container_width=True)
         col1, col2 = st.columns(2)
         with col1: st.download_button(label="🟢 СКАЧАТЬ В EXCEL", data=m.get_excel_bytes(full_list, grand_total), file_name="Смета.xlsx", use_container_width=True)
-        with col2: st.download_button(label="🔵 СКАЧАТЬ В PDF", data=m.get_pdf_bytes(full_list, grand_total), file_name="КП_Инженерия.txt", mime="text/plain", use_container_width=True)
+        with col2: st.download_button(label="🔵 СКАЧАТЬ В TXT", data=m.get_txt_bytes(full_list, grand_total), file_name="КП_Инженерия.txt", mime="text/plain", use_container_width=True)
     else: st.info("Проведите расчет в разделах.")
 
 if st.sidebar.button("Выйти из системы"): st.session_state.auth = False; st.rerun()
