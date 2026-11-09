@@ -23,7 +23,7 @@ if "model" not in st.session_state:
 
 m = st.session_state.model
 st.title("🏗️ Инженерный калькулятор смет")
-st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Рабочий/Гость'}")
+st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Гость'}")
 
 t_list = ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "📊 Расход", "💰 Цены", "🧾 Итог"] if st.session_state.role == "admin" else ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "🧾 Итог"]
 tabs = st.tabs(t_list)
