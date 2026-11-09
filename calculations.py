@@ -1,10 +1,4 @@
-import pandas as pd, io, urllib.request
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
+import pandas as pd, io
 
 class Model:
     def __init__(self):
@@ -18,19 +12,19 @@ class Model:
 
     def calc_hvac(self, b, p, mode, pump, box, ch_b, ch_c, core):
         pr = self.prices["hvac"]; self.h_data = []
-        if mode == "В один этап (Стандарт)": self.h_data.append({"Раздел": "Климат", "Наименование": f"Монтаж кондиционера стандартный ({b} шт.)", "Кол-во": b, "Ед.изм": "шт.", "Цена": pr["work_standard"], "Сумма": b * pr["work_standard"]})
-        elif mode == "1-й этап (Закладка трасс)": self.h_data.append({"Раздел": "Климат", "Наименование": f"Монтаж кондиционера: 1-й этап закладки ({b} шт.)", "Кол-во": b, "Ед.изм": "шт.", "Цена": pr["work_stage_1"], "Сумма": b * pr["work_stage_1"]})
-        elif mode == "2-й этап (Навеска блоков)": self.h_data.append({"Раздел": "Климат", "Наименование": f"Монтаж кондиционера: 2-й этап навески ({b} шт.)", "Кол-во": b, "Ед.изм": "шт.", "Цена": pr["work_stage_2"], "Сумма": b * pr["work_stage_2"]})
+        if mode == "В один этап (Стандарт)": self.h_data.append({"Раздел": "Klimat", "Наименование": f"Montazh kondicionera standart ({b} sht.)", "Кол-во": b, "Ед.изм": "sht.", "Цена": pr["work_standard"], "Сумма": b * pr["work_standard"]})
+        elif mode == "1-й этап (Закладка трасс)": self.h_data.append({"Раздел": "Klimat", "Наименование": f"Kondicioner: 1 etap zakladki ({b} sht.)", "Кол-во": b, "Ед.изм": "sht.", "Цена": pr["work_stage_1"], "Сумма": b * pr["work_stage_1"]})
+        elif mode == "2-й этап (Навеска блоков)": self.h_data.append({"Раздел": "Klimat", "Наименование": f"Kondicioner: 2 etap naveski ({b} sht.)", "Кол-во": b, "Ед.изм": "sht.", "Цена": pr["work_stage_2"], "Сумма": b * pr["work_stage_2"]})
         if mode != "2-й этап (Навеска блоков)":
             if p > 0:
-                self.h_data.append({"Раздел": "Климат", "Наименование": f"Медная фреоновая трасса ({p} м.)", "Кол-во": p, "Ед.изм": "м.", "Цена": pr["pipe"], "Сумма": p * pr["pipe"]})
-                self.h_data.append({"Раздел": "Климат", "Наименование": f"Дренажный шланг ({p} м.)", "Кол-во": p, "Ед.изм": "м.", "Цена": pr["drain"], "Сумма": p * pr["drain"]})
-            if b > 0: self.h_data.append({"Раздел": "Климат", "Наименование": f"Кронштейны внешнего блока ({b} компл.)", "Кол-во": b, "Ед.изм": "компл.", "Цена": pr["bracket"], "Сумма": b * pr["bracket"]})
-        if pump > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Установка дренажной помпы", "Кол-во": pump, "Ед.изм": "шт.", "Цена": pr["pump"], "Сумма": pump * pr["pump"]})
-        if box > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Монтаж декоративного короба", "Кол-во": box, "Ед.изм": "м.", "Цена": pr["box"], "Сумма": box * pr["box"]})
-        if ch_b > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Штроба под трассу (Кирпич)", "Кол-во": ch_b, "Ед.изм": "м.", "Цена": pr["chasing_brick"], "Сумма": ch_b * pr["chasing_brick"]})
-        if ch_c > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Штроба под трассу (Монолит)", "Кол-во": ch_c, "Ед.изм": "м.", "Цена": pr["chasing_concrete"], "Сумма": ch_c * pr["chasing_concrete"]})
-        if core > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Алмазное бурение отверстия", "Кол-во": core, "Ед.изм": "шт.", "Цена": pr["coring"], "Сумма": core * pr["coring"]})
+                self.h_data.append({"Раздел": "Klimat", "Наименование": f"Mednaya freonovaya trassa ({p} m.)", "Кол-во": p, "Ед.изм": "m.", "Цена": pr["pipe"], "Сумма": p * pr["pipe"]})
+                self.h_data.append({"Раздел": "Klimat", "Наименование": f"Drenazhniy shlang ({p} m.)", "Кол-во": p, "Ед.изм": "m.", "Цена": pr["drain"], "Сумма": p * pr["drain"]})
+            if b > 0: self.h_data.append({"Раздел": "Klimat", "Наименование": f"Kronshteyni vneshnego bloka ({b} kompl.)", "Кол-во": b, "Ед.изм": "kompl.", "Цена": pr["bracket"], "Сумма": b * pr["bracket"]})
+        if pump > 0: self.h_data.append({"Раздел": "Klimat", "Наименование": "Ustanovka drenazhnoy pompi", "Кол-во": pump, "Ед.изм": "sht.", "Цена": pr["pump"], "Сумма": pump * pr["pump"]})
+        if box > 0: self.h_data.append({"Раздел": "Klimat", "Наименование": "Montazh dekorativnogo koroba", "Кол-во": box, "Ед.изм": "m.", "Цена": pr["box"], "Сумма": box * pr["box"]})
+        if ch_b > 0: self.h_data.append({"Раздел": "Klimat", "Наименование": "Shtroba pod trassu (Kirpich)", "Кол-во": ch_b, "Ед.изм": "m.", "Цена": pr["chasing_brick"], "Сумма": ch_b * pr["chasing_brick"]})
+        if ch_c > 0: self.h_data.append({"Раздел": "Klimat", "Наименование": "Shtroba pod trassu (Monolit)", "Кол-во": ch_c, "Ед.изм": "m.", "Цена": pr["chasing_concrete"], "Сумма": ch_c * pr["chasing_concrete"]})
+        if core > 0: self.h_data.append({"Раздел": "Klimat", "Наименование": "Almaznoe burenie otverstiya", "Кол-во": core, "Ед.изм": "sht.", "Цена": pr["coring"], "Сумма": core * pr["coring"]})
         return sum(i["Сумма"] for i in self.h_data)
 
     def calc_elec(self, pt, ch, breakers):
@@ -38,14 +32,14 @@ class Model:
         c_15, c_25, c_40 = round(total_cable * 0.3, 1), round(total_cable * 0.6, 1), round(total_cable * 0.1, 1)
         clips_qty = int(total_cable * 3)
         self.e_data = [
-            {"Раздел": "Электрика", "Наименование": f"Монтаж точек ({pt} шт.)", "Кол-во": pt, "Ед.изм": "шт.", "Цена": pr["point"], "Сумма": pt * pr["point"]},
-            {"Раздел": "Электрика", "Наименование": f"Штробление стен ({ch} м.)", "Кол-во": ch, "Ед.изм": "м.", "Цена": pr["chasing"], "Сумма": ch * pr["chasing"]},
-            {"Раздел": "Электрика", "Наименование": "Установка автоматов в щит", "Кол-во": breakers, "Ед.изм": "шт.", "Цена": pr["breaker"], "Сумма": breakers * pr["breaker"]},
-            {"Раздел": "Электрика", "Наименование": "Кабель ВВГнг 3х1.5 (Свет)", "Кол-во": c_15, "Ед.изм": "м.", "Цена": pr["cable_1.5"], "Сумма": c_15 * pr["cable_1.5"]},
-            {"Раздел": "Электрика", "Наименование": "Кабель ВВГнг 3х2.5 (Розетки)", "Кол-во": c_25, "Ед.изм": "м.", "Цена": pr["cable_2.5"], "Сумма": c_25 * pr["cable_2.5"]},
-            {"Раздел": "Электрика", "Наименование": "Кабель ВВГнг 3х4.0 (Силовой)", "Кол-во": c_40, "Ед.изм": "м.", "Цена": pr["cable_4.0"], "Сумма": c_40 * pr["cable_4.0"]},
-            {"Раздел": "Электрика", "Наименование": "Гофра защитная", "Кол-во": total_cable, "Ед.изм": "м.", "Цена": pr["corrugation"], "Сумма": total_cable * pr["corrugation"]},
-            {"Раздел": "Электрика", "Наименование": "Крепеж/Клипсы для гофры", "Кол-во": clips_qty, "Ед.изм": "шт.", "Цена": pr["clips"], "Сумма": clips_qty * pr["clips"]}
+            {"Раздел": "Elektrika", "Наименование": f"Montazh tochek ({pt} sht.)", "Кол-во": pt, "Ед.изм": "sht.", "Цена": pr["point"], "Сумма": pt * pr["point"]},
+            {"Раздел": "Elektrika", "Наименование": f"Shtroblenie sten ({ch} m.)", "Кол-во": ch, "Ед.изм": "m.", "Цена": pr["chasing"], "Сумма": ch * pr["chasing"]},
+            {"Раздел": "Elektrika", "Наименование": "Ustanovka avtomatov v schit", "Кол-во": breakers, "Ед.изм": "sht.", "Цена": pr["breaker"], "Сумма": breakers * pr["breaker"]},
+            {"Раздел": "Elektrika", "Наименование": "Kabel VVGng 3x1.5 (Svet)", "Кол-во": c_15, "Ед.изм": "m.", "Цена": pr["cable_1.5"], "Сумма": c_15 * pr["cable_1.5"]},
+            {"Раздел": "Elektrika", "Наименование": "Kabel VVGng 3x2.5 (Rozetki)", "Кол-во": c_25, "Ед.изм": "m.", "Цена": pr["cable_2.5"], "Сумма": c_25 * pr["cable_2.5"]},
+            {"Раздел": "Elektrika", "Наименование": "Kabel VVGng 3x4.0 (Silovoy)", "Кол-во": c_40, "Ед.изм": "m.", "Цена": pr["cable_4.0"], "Сумма": c_40 * pr["cable_4.0"]},
+            {"Раздел": "Elektrika", "Наименование": "Gofra zaschitnaya", "Кол-во": total_cable, "Ед.изм": "m.", "Цена": pr["corrugation"], "Сумма": total_cable * pr["corrugation"]},
+            {"Раздел": "Elektrika", "Наименование": "Krepezh/Klipsi dlya gofri", "Кол-во": clips_qty, "Ед.изм": "sht.", "Цена": pr["clips"], "Сумма": clips_qty * pr["clips"]}
         ]
         return sum(i["Сумма"] for i in self.e_data)
 
@@ -53,11 +47,11 @@ class Model:
         pr = self.prices["plumbing"]; total_pipe = pt * self.cp
         p_16, p_20, fit = round(total_pipe * 0.8, 1), round(total_pipe * 0.2, 1), pt * self.cf
         self.p_data = [
-            {"Раздел": "Сантехника", "Наименование": f"Монтаж точек водоразбора ({pt} шт.)", "Кол-во": pt, "Ед.изм": "шт.", "Цена": pr["point"], "Сумма": pt * pr["point"]},
-            {"Раздел": "Сантехника", "Наименование": "Установка коллекторов", "Кол-во": col, "Ед.изм": "шт.", "Цена": pr["collector"], "Сумма": col * pr["collector"]},
-            {"Раздел": "Сантехника", "Наименование": "Труба PEX 16мм", "Кол-во": p_16, "Ед.изм": "м.", "Цена": pr["pipe_16"], "Сумма": p_16 * pr["pipe_16"]},
-            {"Раздел": "Сантехника", "Наименование": "Труба PEX 20мм (магистраль)", "Кол-во": p_20, "Ед.изм": "м.", "Цена": pr["pipe_20"], "Сумма": p_20 * pr["pipe_20"]},
-            {"Раздел": "Сантехника", "Наименование": "Аксиальные фитинги/водорозетки", "Кол-во": fit, "Ед.изм": "шт.", "Цена": pr["fitting"], "Сумма": fit * pr["fitting"]}
+            {"Раздел": "Santehnika", "Наименование": f"Montazh tochek vodorazbora ({pt} sht.)", "Кол-во": pt, "Ед.изм": "sht.", "Цена": pr["point"], "Сумма": pt * pr["point"]},
+            {"Раздел": "Santehnika", "Наименование": "Ustanovka kollektorov", "Кол-во": col, "Ед.изм": "sht.", "Цена": pr["collector"], "Сумма": col * pr["collector"]},
+            {"Раздел": "Santehnika", "Наименование": "Truba PEX 16mm", "Кол-во": p_16, "Ед.изм": "m.", "Цена": pr["pipe_16"], "Сумма": p_16 * pr["pipe_16"]},
+            {"Раздел": "Santehnika", "Наименование": "Truba PEX 20mm (magistral)", "Кол-во": p_20, "Ед.изм": "m.", "Цена": pr["pipe_20"], "Сумма": p_20 * pr["pipe_20"]},
+            {"Раздел": "Santehnika", "Наименование": "Aksialnie fitingi/vodorozetki", "Кол-во": fit, "Ед.изм": "sht.", "Цена": pr["fitting"], "Сумма": fit * pr["fitting"]}
         ]
         return sum(i["Сумма"] for i in self.p_data)
 
@@ -68,19 +62,13 @@ class Model:
         return buf.getvalue()
 
     def get_pdf_bytes(self, f_list, grand):
-        font_res = urllib.request.urlopen("https://github.com")
-        pdfmetrics.registerFont(TTFont('DejaVu', io.BytesIO(font_res.read())))
-        buf = io.BytesIO(); doc = SimpleDocTemplate(buf, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30); story = []
-        styles = getSampleStyleSheet()
-        t_style = ParagraphStyle('T', parent=styles['Heading1'], fontName='DejaVu', fontSize=14, spaceAfter=20, alignment=1)
-        c_style = ParagraphStyle('C', parent=styles['Normal'], fontName='DejaVu', fontSize=8, leading=10)
-        h_style = ParagraphStyle('H', parent=styles['Normal'], fontName='DejaVu', fontSize=9, textColor=colors.whitesmoke)
-        story.append(Paragraph("<b>КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ ПО ИНЖЕНЕРИИ</b>", t_style)); story.append(Spacer(1, 10))
-        t_data = [[Paragraph("<b>Раздел</b>", h_style), Paragraph("<b>Наименование работ</b>", h_style), Paragraph("<b>Кол-во</b>", h_style), Paragraph("<b>Ед.</b>", h_style), Paragraph("<b>Цена</b>", h_style), Paragraph("<b>Сумма</b>", h_style)]]
-        for i in f_list: t_data.append([Paragraph(str(i["Раздел"]), c_style), Paragraph(str(i["Наименование"]), c_style), Paragraph(str(i["Кол-во"]), c_style), Paragraph(str(i["Ед.изм"]), c_style), Paragraph(f"{i['Цена']}", c_style), Paragraph(f"{i['Сумма']}", c_style)])
-        tot_style = ParagraphStyle('Tot', parent=styles['Normal'], fontName='DejaVu', fontSize=9)
-        t_data.append([Paragraph("<b>ИТОГО</b>", tot_style), Paragraph("<b>ОБЩАЯ СТОИМОСТЬ ПОД КЛЮЧ</b>", tot_style), "", "", "", Paragraph(f"<b>{grand} руб.</b>", tot_style)])
-        t = Table(t_data, colWidths=[65, 250, 45, 35, 55, 70])
-        t.setStyle(TableStyle([('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1f538d')), ('ALIGN', (0,0), (-1,-1), 'LEFT'), ('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('BOTTOMPADDING', (0,0), (-1,0), 6), ('TOPPADDING', (0,0), (-1,0), 6), ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey), ('GRID', (0,0), (-1,-1), 0.5, colors.grey)]))
-        story.append(t); doc.build(story); buf.seek(0)
-        return buf.getvalue()
+        # Используем только стандартные, встроенные в интернет-сервер модули сборки текстового бланка
+        txt = "=========================================\n"
+        txt += "   KOMMERCHESKOE PREDLOZHENIE (SMETA)\n"
+        txt += "=========================================\n\n"
+        for i in f_list:
+            txt += f"[{i['Раздел']}] {i['Наименование']}\n"
+            txt += f"  {i['Кол-во']} {i['Ед.изм']} x {i['Цена']} rub. = {i['Сумма']} rub.\n\n"
+        txt += "-----------------------------------------\n"
+        txt += f"ITOGOVAYA STOIMOST: {grand} rub."
+        return io.BytesIO(txt.encode('utf-8'))
