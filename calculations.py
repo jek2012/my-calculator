@@ -1,4 +1,4 @@
-import pandas as pd, io
+import pandas as pd, io, urllib.request
 
 class Model:
     def __init__(self):
@@ -19,36 +19,57 @@ class Model:
         self.cc, self.cp, self.cf = 5.0, 6.0, 2
         self.h_data, self.e_data, self.p_data = [], [], []
 
+    def load_remote_prices(self, repo_url):
+        try:
+            res = urllib.request.urlopen(repo_url + "/raw/main/prices.txt")
+            lines = res.read().decode('utf-8').splitlines()
+            p_map = {}
+            for line in lines:
+                if "=" in line:
+                    k, v = line.strip().split("=")
+                    p_map[k] = float(v)
+            
+            # Обновляем климат
+            for k in self.prices["hvac"].keys():
+                if k in p_map: self.prices["hvac"][k] = p_map[k]
+                
+            # Обновляем электрику
+            mapping_e = {"point": "point_el", "cable_1.5": "cable_1.5", "cable_2.5": "cable_2.5", "cable_4.0": "cable_4.0", "corrugation": "corrugation", "clips": "clips", "breaker": "breaker", "chasing": "chasing_el"}
+            for k, target in mapping_e.items():
+                if target in p_map: self.prices["electric"][k] = p_map[target]
+                
+            # Обновляем сантехнику
+            mapping_p = {"point": "point_pl", "pipe_16": "pipe_16", "pipe_20": "pipe_20", "collector": "collector", "fitting": "fitting"}
+            for k, target in mapping_p.items():
+                if target in p_map: self.prices["plumbing"][k] = p_map[target]
+        except:
+            pass # Если файла нет, считаем по базовым из кода
+
     def calc_hvac(self, blocks, pipe, mode, pump, box, ch_b, ch_c, core):
-        pr = self.prices["hvac"]
-        self.h_data = []
+        pr = self.prices["hvac"]; self.h_data = []
         if mode == "В один этап (Стандарт)":
             self.h_data.append({"Раздел": "Климат", "Наименование": f"Монтаж кондиционера стандартный ({blocks} шт.)", "Кол-во": blocks, "Ед.изм": "шт.", "Цена": pr["work_standard"], "Сумма": blocks * pr["work_standard"]})
         elif mode == "1-й этап (Закладка трасс)":
             self.h_data.append({"Раздел": "Климат", "Наименование": f"Монтаж кондиционера: 1-й этап закладки ({blocks} шт.)", "Кол-во": blocks, "Ед.изм": "шт.", "Цена": pr["work_stage_1"], "Сумма": blocks * pr["work_stage_1"]})
         elif mode == "2-й этап (Навеска блоков)":
             self.h_data.append({"Раздел": "Климат", "Наименование": f"Монтаж кондиционера: 2-й этап навески ({blocks} шт.)", "Кол-во": blocks, "Ед.изм": "шт.", "Цена": pr["work_stage_2"], "Сумма": blocks * pr["work_stage_2"]})
-
         if mode != "2-й этап (Навеска блоков)":
             if pipe > 0:
                 self.h_data.append({"Раздел": "Климат", "Наименование": f"Медная фреоновая трасса ({pipe} м.)", "Кол-во": pipe, "Ед.изм": "м.", "Цена": pr["pipe"], "Сумма": pipe * pr["pipe"]})
                 self.h_data.append({"Раздел": "Климат", "Наименование": f"Дренажный шланг ({pipe} м.)", "Кол-во": pipe, "Ед.изм": "м.", "Цена": pr["drain"], "Сумма": pipe * pr["drain"]})
             if blocks > 0:
                 self.h_data.append({"Раздел": "Климат", "Наименование": f"Кронштейны внешнего блока ({blocks} компл.)", "Кол-во": blocks, "Ед.изм": "компл.", "Цена": pr["bracket"], "Сумма": blocks * pr["bracket"]})
-
         if pump > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Установка дренажной помпы", "Кол-во": pump, "Ед.изм": "шт.", "Цена": pr["pump"], "Сумма": pump * pr["pump"]})
-        if box > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Монтаж декоративного короба", "Кол-во": box, "Ед.изм": "м.", "Цена": pr["box"], "Сумма": box * pr["box"]})
+        if box > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Монтаж декоративного короба", "Кол-во": box, "Ед.изм": "m.", "Цена": pr["box"], "Сумма": box * pr["box"]})
         if ch_b > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Штроба под трассу (Кирпич)", "Кол-во": ch_b, "Ед.изм": "м.", "Цена": pr["chasing_brick"], "Сумма": ch_b * pr["chasing_brick"]})
         if ch_c > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Штроба под трассу (Монолит)", "Кол-во": ch_c, "Ед.изм": "м.", "Цена": pr["chasing_concrete"], "Сумма": ch_c * pr["chasing_concrete"]})
         if core > 0: self.h_data.append({"Раздел": "Климат", "Наименование": "Алмазное бурение отверстия", "Кол-во": core, "Ед.изм": "шт.", "Цена": pr["coring"], "Сумма": core * pr["coring"]})
         return sum(i["Сумма"] for i in self.h_data)
 
     def calc_elec(self, pt, ch, breakers):
-        pr = self.prices["electric"]
-        total_cable = pt * self.cc
+        pr = self.prices["electric"]; total_cable = pt * self.cc
         c_15, c_25, c_40 = round(total_cable * 0.3, 1), round(total_cable * 0.6, 1), round(total_cable * 0.1, 1)
         clips_qty = int(total_cable * 3)
-
         self.e_data = [
             {"Раздел": "Электрика", "Наименование": f"Монтаж точек ({pt} шт.)", "Кол-во": pt, "Ед.изм": "шт.", "Цена": pr["point"], "Сумма": pt * pr["point"]},
             {"Раздел": "Электрика", "Наименование": f"Штробление стен ({ch} м.)", "Кол-во": ch, "Ед.изм": "м.", "Цена": pr["chasing"], "Сумма": ch * pr["chasing"]},
@@ -62,10 +83,8 @@ class Model:
         return sum(i["Сумма"] for i in self.e_data)
 
     def calc_plumb(self, pt, col):
-        pr = self.prices["plumbing"]
-        total_pipe = pt * self.cp
+        pr = self.prices["plumbing"]; total_pipe = pt * self.cp
         p_16, p_20, fit = round(total_pipe * 0.8, 1), round(total_pipe * 0.2, 1), pt * self.cf
-
         self.p_data = [
             {"Раздел": "Сантехника", "Наименование": f"Монтаж точек водоразбора ({pt} шт.)", "Кол-во": pt, "Ед.изм": "шт.", "Цена": pr["point"], "Сумма": pt * pr["point"]},
             {"Раздел": "Сантехника", "Наименование": "Установка коллекторов", "Кол-во": col, "Ед.изм": "шт.", "Цена": pr["collector"], "Сумма": col * pr["collector"]},
@@ -76,12 +95,9 @@ class Model:
         return sum(i["Сумма"] for i in self.p_data)
 
     def get_excel_bytes(self, full_list, grand_total):
-        df = pd.DataFrame(full_list)
-        df_tot = pd.DataFrame([{"Раздел": "ИТОГО", "Наименование": "ОБЩАЯ СТОИМОСТЬ", "Кол-во": "", "Ед.изм": "", "Цена": "", "Сумма": grand_total}])
-        df_final = pd.concat([df, df_tot], ignore_index=True)
+        df = pd.DataFrame(full_list); df_tot = pd.DataFrame([{"Раздел": "ИТОГО", "Наименование": "ОБЩАЯ СТОИМОСТЬ", "Кол-во": "", "Ед.изм": "", "Цена": "", "Сумма": grand_total}])
         buf = io.BytesIO()
-        with pd.ExcelWriter(buf, engine='openpyxl') as writer:
-            df_final.to_excel(writer, index=False)
+        with pd.ExcelWriter(buf, engine='openpyxl') as writer: pd.concat([df, df_tot], ignore_index=True).to_excel(writer, index=False)
         return buf.getvalue()
 
     def get_pdf_bytes(self, full_list, grand_total):
