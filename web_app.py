@@ -65,7 +65,7 @@ if "model" not in st.session_state:
 
 m = st.session_state.model
 draw_text_header("Инженерный калькулятор смет", is_main=True)
-st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Рабочий/Гость'}")
+st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Гость'}")
 
 t_list = ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "📊 Расход", "💰 Цены", "🧾 Итог"] if st.session_state.role == "admin" else ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "🧾 Итог"]
 tabs = st.tabs(t_list)
@@ -78,7 +78,7 @@ with tab_hvac:
     b = st.number_input("Блоки (шт)", min_value=0, value=0, key="h_b")
     p = st.number_input("Трасса (м)", min_value=0.0, value=0.0, key="h_p")
     mode = st.selectbox("Схема", ["В один этап (Стандарт)", "1-й этап (Закладка трасс)", "2-й этап (Навеска блоков)"])
-    with st.expander("Дополнительные усложнения"):
+    with st.expander("Доп.Работы"):
         pump = st.number_input("Помпы (шт)", min_value=0, value=0, key="h_pump")
         box = st.number_input("Короб (м)", min_value=0.0, value=0.0, key="h_box")
         core = st.number_input("Бурение отверстий (шт)", min_value=0, value=0, key="h_core")
@@ -98,7 +98,7 @@ with tab_elec:
         st.success(f"Всего по разделу: {st.session_state.e_tot} руб.")
 
 with tab_plumb:
-    draw_text_header("Сантехника и Отопление дома")
+    draw_text_header("Сантехника и Отопление")
     p_pt = st.number_input("Точки водоснабжения (шт)", min_value=0, value=0, key="p_pt")
     col = st.number_input("Коллекторы (шт)", min_value=0, value=0, key="p_col")
     if st.button("Рассчитать сантехнику", type="primary", key="btn_p"):
@@ -142,7 +142,7 @@ if tab_prices:
             m.prices["plumbing"]["collector"] = st.number_input("Сборка коллектора (руб)", value=int(m.prices["plumbing"]["collector"]), key="pr_pco")
             m.prices["plumbing"]["fitting"] = st.number_input("Фитинги/Водорозетки за шт (руб)", value=int(m.prices["plumbing"]["fitting"]), key="pr_pfi")
         if st.button("💾 СОХРАНИТЬ ПРАЙС-ЛИСТ НА СЕРВЕРЕ", type="primary", use_container_width=True, key="btn_save_p"):
-            if m.save_local_prices(): st.success("Прайс-лист успешно зафиксирован!")
+            if m.save_local_prices(): st.success("Прайс-лист успешно сохранён!")
             else: st.error("Ошибка сохранения.")
 with tab_est:
     draw_text_header("Итоговая смета инженерии объекта", size=20)
