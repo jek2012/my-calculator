@@ -5,27 +5,48 @@ from calculations import Model
 st.set_page_config(page_title="Калькулятор смет под ключ", layout="centered")
 P_ADMIN, P_GUEST = "admin", "123"
 
-# --- ФУНКЦИЯ ДЛЯ КРУПНЫХ, НЕБЬЮЩИХСЯ ЗАГОЛОВКОВ (ЧЕРЕЗ СТИЛИ) ---
-# white-space: nowrap запрещает тексту переноситься на новую строку и ломать слова!
-def draw_text_header(text, size=24, is_main=False):
+# --- ПРОФЕССИОНАЛЬНАЯ ФУНКЦИЯ ДЛЯ АДАПТИВНЫХ ЗАГОЛОВКОВ-КАРТОЧЕК ---
+# padding и border-radius делают красивую подложку, а 5.5vw адаптирует текст под экран телефона
+def draw_text_header(text, is_main=False):
     emoji = "🏗️ " if is_main else ""
-    margin_bottom = "20px" if is_main else "10px"
     
-    html_code = f"""
-    <div style="
-        font-family: Arial, sans-serif; 
-        font-size: {size}px; 
-        font-weight: bold; 
-        color: currentColor; 
-        white-space: nowrap; 
-        overflow: hidden; 
-        text-overflow: ellipsis;
-        margin-bottom: {margin_bottom};
-        margin-top: 10px;
-    ">
-        {emoji}{text}
-    </div>
-    """
+    if is_main:
+        # Стили для главного баннера: легкий фон, скругление, отступы и адаптивный шрифт
+        html_code = f"""
+        <div style="
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 5px solid #1f538d;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        ">
+            <span style="font-size: 22px; vertical-align: middle;">{emoji}</span>
+            <span style="
+                font-family: 'Segoe UI', Arial, sans-serif; 
+                font-size: calc(18px + 1.5vw); 
+                font-weight: 800; 
+                color: currentColor;
+                line-height: 1.3;
+            ">{text}</span>
+        </div>
+        """
+    else:
+        # Стили для обычных подзаголовков внутри вкладок (не рвутся уродливо, аккуратно переносятся)
+        html_code = f"""
+        <div style="
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            font-size: calc(16px + 0.8vw); 
+            font-weight: 600; 
+            color: currentColor; 
+            line-height: 1.4;
+            margin-bottom: 15px;
+            margin-top: 15px;
+        ">
+            {text}
+        </div>
+        """
     st.markdown(html_code, unsafe_allow_html=True)
 
 # Экран ввода пароля
@@ -33,7 +54,7 @@ if "auth" not in st.session_state:
     st.session_state.auth, st.session_state.role = False, None
 
 if not st.session_state.auth:
-    draw_text_header("Вход в Калькулятор Смет", size=26, is_main=True)
+    draw_text_header("Вход в Калькулятор Смет", is_main=True)
     user_pass = st.text_input("Введите код доступа:", type="password")
     if st.button("Войти", type="primary", use_container_width=True):
         if user_pass == P_ADMIN: st.session_state.auth, st.session_state.role = True, "admin"; st.rerun()
@@ -47,8 +68,8 @@ if "model" not in st.session_state:
 
 m = st.session_state.model
 
-# Главный заголовок сайта
-draw_text_header("Инженерный калькулятор смет", size=28, is_main=True)
+# Главный заголовок сайта в виде фирменной карточки
+draw_text_header("Инженерный калькулятор смет", is_main=True)
 st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Гость'}")
 
 t_list = ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "📊 Расход", "💰 Цены", "🧾 Итог"] if st.session_state.role == "admin" else ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "🧾 Итог"]
