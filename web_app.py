@@ -5,14 +5,53 @@ from calculations import Model
 st.set_page_config(page_title="Калькулятор смет под ключ", layout="centered")
 P_ADMIN, P_GUEST = "admin", "123"
 
-def draw_text_header(text, size=24, is_main=False):
+# --- ВОЗВРАЩЕНА НАША ИДЕАЛЬНАЯ ФУНКЦИЯ НЕБЬЮЩИХСЯ ЗАГОЛОВКОВ ---
+def draw_text_header(text, is_main=False):
+    emoji = "🏗️ " if is_main else ""
     margin_bottom = "20px" if is_main else "10px"
-    html_code = f"""<div style="font-family: Arial, sans-serif; font-size: clamp({size-4}px, 3.5vw, {size}px); font-weight: bold; color: currentColor; white-space: nowrap; margin-bottom: {margin_bottom}; margin-top: 10px;">{'🏗️ ' if is_main else ''}{text}</div>"""
+    
+    if is_main:
+        # Фирменная карточка-баннер для главного заголовка
+        html_code = f"""
+        <div style="
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 5px solid #1f538d;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: {margin_bottom};
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        ">
+            <span style="font-size: 22px; vertical-align: middle;">{emoji}</span>
+            <span style="
+                font-family: 'Segoe UI', Arial, sans-serif; 
+                font-size: clamp(20px, 4vw, 26px); 
+                font-weight: 800; 
+                color: currentColor;
+                line-height: 1.3;
+            ">{text}</span>
+        </div>
+        """
+    else:
+        # Четкие подзаголовки внутри вкладок с автопереносом строк
+        html_code = f"""
+        <div style="
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            font-size: clamp(16px, 2.5vw, 20px); 
+            font-weight: 600; 
+            color: currentColor; 
+            line-height: 1.4;
+            margin-bottom: 15px;
+            margin-top: 15px;
+        ">
+            {text}
+        </div>
+        """
     st.markdown(html_code, unsafe_allow_html=True)
 
 if "auth" not in st.session_state: st.session_state.auth, st.session_state.role = False, None
 if not st.session_state.auth:
-    draw_text_header("Вход в Калькулятор Смет", size=26, is_main=True)
+    draw_text_header("Вход в Калькулятор Смет", is_main=True)
     user_pass = st.text_input("Введите код доступа:", type="password")
     if st.button("Войти", type="primary", use_container_width=True):
         if user_pass == P_ADMIN: st.session_state.auth, st.session_state.role = True, "admin"; st.rerun()
@@ -25,8 +64,8 @@ if "model" not in st.session_state:
     st.session_state.h_tot, st.session_state.e_tot, st.session_state.p_tot = 0, 0, 0
 
 m = st.session_state.model
-draw_text_header("Инженерный калькулятор смет", size=28, is_main=True)
-st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Гость'}")
+draw_text_header("Инженерный калькулятор смет", is_main=True)
+st.caption(f"Роль: {'Администратор' if st.session_state.role == 'admin' else 'Рабочий/Гость'}")
 
 t_list = ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "📊 Расход", "💰 Цены", "🧾 Итог"] if st.session_state.role == "admin" else ["❄️ Климат", "⚡ Электрика", "🚰 Сантехника", "🧾 Итог"]
 tabs = st.tabs(t_list)
