@@ -112,7 +112,7 @@ class Model:
         with pd.ExcelWriter(buf, engine='openpyxl') as writer: pd.concat([df, df_tot], ignore_index=True).to_excel(writer, index=False)
         return buf.getvalue()
 
-    def get_pdf_bytes(self, full_list, grand_total):
+    def get_txt_bytes(self, full_list, grand_total):
         txt = "=========================================\n"
         txt += "   КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ (СМЕТА)\n"
         txt += "=========================================\n\n"
